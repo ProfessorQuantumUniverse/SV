@@ -1,0 +1,854 @@
+/* ============================================================
+   SV PROTOKOLL – Stylesheet
+   Matches the reference FullProtokoll.pdf layout exactly
+   ============================================================ */
+
+:root {
+    /* A4 dimensions */
+    --page-w: 210mm;
+    --page-h: 297mm;
+
+    /* Outer margin (space from page edge to frame border) */
+    --margin-outer: 12mm;
+
+    /* Frame border thickness */
+    --border-w: 3px;
+
+    /* Inner padding (space from frame border to content) */
+    --pad-x: 12mm;
+    --pad-top: 4mm;
+    --pad-bottom: 6mm;
+
+    /* Font families */
+    --font-heading: 'Courier Prime', 'Courier New', monospace;
+    --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+
+    /* Font sizes (matching reference PDF point sizes) */
+    --fs-title: 22pt;
+    --fs-section-header: 18pt;
+    --fs-attendance: 13pt;
+    --fs-entry-title: 13pt;
+    --fs-entry-text: 11.5pt;
+    --fs-topics: 11.5pt;
+    --fs-footer: 11.5pt;
+}
+
+/* ============================================================
+   GLOBAL
+   ============================================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f3f4f6;
+    font-family: var(--font-body);
+    color: #1f2937;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ============================================================
+   EDITOR SIDEBAR
+   ============================================================ */
+
+.editor-sidebar {
+    width: 420px;
+    min-width: 420px;
+    background: #ffffff;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    z-index: 20;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.04);
+}
+
+.sidebar-header {
+    padding: 24px;
+    background: #ffffff;
+    color: #111827;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.sidebar-header h1 {
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #111827;
+}
+
+.version-tag {
+    font-size: 11px;
+    font-weight: 600;
+    color: #059669;
+    background: #ecfdf5;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    background: #fcfcfc;
+}
+
+/* Custom Scrollbar */
+.sidebar-content::-webkit-scrollbar {
+    width: 6px;
+}
+.sidebar-content::-webkit-scrollbar-thumb {
+    background-color: #e5e7eb;
+    border-radius: 3px;
+}
+
+.sidebar-footer {
+    padding: 20px 24px;
+    background: #ffffff;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Editor Cards */
+.editor-card {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    border: 1px solid #f3f4f6;
+    transition: box-shadow 0.2s;
+}
+
+.editor-card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.card-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6b7280;
+    letter-spacing: 0.05em;
+    margin-bottom: 16px;
+    display: block;
+}
+
+.card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.card-header-row .card-label {
+    margin-bottom: 0;
+}
+
+/* Fields */
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #374151;
+}
+
+.field-input {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    background: #ffffff;
+    color: #111827;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.field-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.field-input::placeholder {
+    color: #9ca3af;
+}
+
+/* Buttons */
+.btn-reset {
+    font-size: 11px;
+    font-weight: 600;
+    color: #ef4444;
+    background: #fef2f2;
+    border: 1px solid transparent;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.btn-reset:hover {
+    background: #fee2e2;
+    border-color: #fecaca;
+    text-decoration: none;
+}
+
+.btn-add {
+    background: #f3f4f6;
+    color: #111827;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-add:hover {
+    background: #e5e7eb;
+    border-color: #d1d5db;
+}
+
+.btn-pdf {
+    width: 100%;
+    background: #111827;
+    color: #fff;
+    padding: 14px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: transform 0.1s, background 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.btn-pdf:hover {
+    background: #000;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-pdf:active {
+    transform: translateY(0);
+}
+
+.btn-pdf:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Logo Upload */
+.logo-upload-area {
+    border: 2px dashed #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+    background: #f9fafb;
+}
+
+.logo-upload-area:hover {
+    border-color: #9ca3af;
+    background: #f3f4f6;
+}
+
+#logo-upload-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+#logo-upload-preview img {
+    max-height: 48px;
+    max-width: 140px;
+    object-fit: contain;
+}
+
+/* Attendance Grid */
+.att-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.att-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f9fafb;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #f3f4f6;
+    min-width: 0;
+}
+
+.att-field-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #4b5563;
+    width: 24px;
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.att-field input {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    border: 1px solid transparent;
+    background: transparent;
+    padding: 2px;
+    outline: none;
+    color: #111;
+    font-weight: 500;
+}
+
+.att-field input:focus {
+    border-bottom: 1px solid #6366f1;
+}
+
+/* Sections List */
+.sections-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.section-editor {
+    background: #fff;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.section-editor:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.section-editor .btn-remove {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    color: #9ca3af;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.2s;
+    line-height: 0;
+}
+
+.section-editor .btn-remove:hover {
+    color: #ef4444;
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+.section-editor .sec-title-input {
+    width: 100%;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    outline: none;
+    padding: 4px 0;
+    margin-bottom: 12px;
+    padding-right: 30px;
+    background: transparent;
+    color: #111827;
+    transition: border-color 0.2s;
+}
+
+.section-editor .sec-title-input:focus {
+    border-bottom-color: #6366f1;
+}
+
+.section-editor .sec-text-input {
+    width: 100%;
+    min-height: 80px;
+    resize: vertical;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    background: #f9fafb;
+    color: #374151;
+    font-family: var(--font-body);
+    outline: none;
+    transition: all 0.2s;
+}
+
+.section-editor .sec-text-input:focus {
+    border-color: #6366f1;
+    background: #fff;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.05);
+}
+
+/* ============================================================
+   PREVIEW AREA
+   ============================================================ */
+
+.preview-area {
+    flex: 1;
+    background: #52525b; /* Darker clean workspace background */
+    overflow-y: auto;
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+#pdf-preview-container {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    align-items: center;
+}
+
+/* ============================================================
+   HIDDEN MEASURER
+   ============================================================ */
+
+#measurer {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    /* Width matches content area inside the frame:
+       page-w - 2*margin-outer - 2*border-w - 2*pad-x */
+    width: calc(var(--page-w) - 2 * var(--margin-outer) - 2 * var(--border-w) - 2 * var(--pad-x));
+    visibility: hidden;
+    pointer-events: none;
+    /* Same font styles as the page content */
+    font-family: var(--font-body);
+    color: #000;
+}
+
+/* ============================================================
+   PROTOCOL PAGE (A4 Page in Preview)
+   ============================================================ */
+
+.protocol-page {
+    width: var(--page-w);
+    height: var(--page-h);
+    background: #fff;
+    padding: var(--margin-outer);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    position: relative;
+    /* Crisp text rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Ensure colors print */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+/* The black frame border */
+.page-frame {
+    width: 100%;
+    height: 100%;
+    /* No top border – the header-line acts as partial top border */
+    border-left: var(--border-w) solid #000;
+    border-right: var(--border-w) solid #000;
+    border-bottom: var(--border-w) solid #000;
+    border-top: none;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+}
+
+/* ============================================================
+   PAGE HEADER (Logo + Line = Top Border)
+   ============================================================ */
+
+.page-header {
+    display: flex;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    padding: 0 4mm 0 var(--pad-x);
+    flex-shrink: 0;
+    gap: 10px;
+    /* Position logo so its center sits on the top border line */
+    margin-top: -28px;
+}
+
+/* Fallback CSS Logo (circle with S|V) */
+.logo-circle {
+    width: 42px;
+    height: 42px;
+    border: 2.5px solid #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1;
+    position: relative;
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.logo-split {
+    position: absolute;
+    height: 65%;
+    width: 2px;
+    background: #000;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
+.logo-char {
+    background: #fff;
+    z-index: 2;
+    position: relative;
+    padding: 0 1px;
+}
+
+/* Uploaded logo image */
+.logo-img {
+    height: 56px;
+    max-width: 160px;
+    object-fit: contain;
+}
+
+.brand-text {
+    font-family: var(--font-body);
+    font-size: 16pt;
+    font-weight: 400;
+    letter-spacing: 0.3px;
+    color: #000;
+    white-space: nowrap;
+}
+
+/* The horizontal thick line – acts as the top border from after logo to right edge */
+.header-line {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    margin-right: calc(-1 * var(--border-w)); /* extend line flush to right border */
+}
+
+.header-line-inner {
+    width: 100%;
+    height: 0;
+    border-top: var(--border-w) solid #000;
+}
+
+/* ============================================================
+   PAGE CONTENT AREA
+   ============================================================ */
+
+.page-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0 var(--pad-x) var(--pad-bottom) var(--pad-x);
+    min-height: 0;
+}
+
+/* TITLE */
+.page-title {
+    text-align: center;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: var(--fs-title);
+    margin-top: 10px;
+    margin-bottom: 25px;
+    letter-spacing: 0.5px;
+    color: #000;
+    flex-shrink: 0;
+}
+
+/* SECTION HEADERS (Anwesend, Themen, Protokoll) */
+.section-header {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: var(--fs-section-header);
+    color: #000;
+    margin-top: 15px;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+}
+
+.section-header.with-underline {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 2px;
+    margin-top: 20px;
+}
+
+/* ============================================================
+   ATTENDANCE
+   ============================================================ */
+
+.attendance-section {
+    flex-shrink: 0;
+}
+
+.attendance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 30px;
+    row-gap: 1px;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: var(--fs-attendance);
+    margin-bottom: 12px;
+    color: #000;
+}
+
+.att-row {
+    display: flex;
+    align-items: baseline;
+    line-height: 1.5;
+}
+
+.att-class {
+    font-weight: 700;
+    width: 35px;
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   TOPICS
+   ============================================================ */
+
+.topics-section {
+    flex-shrink: 0;
+}
+
+.topics-block {
+    font-family: var(--font-body);
+    font-size: var(--fs-topics);
+    line-height: 1.5;
+    padding-left: 18px;
+    margin-bottom: 8px;
+    font-weight: 400;
+    color: #000;
+}
+
+.topics-block ul {
+    list-style-type: disc;
+    margin: 0;
+    padding: 0;
+}
+
+.topics-block li::marker {
+    font-size: 1.1em;
+}
+
+/* ============================================================
+   PROTOCOL ENTRIES
+   ============================================================ */
+
+.protocol-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.protocol-entries {
+    flex: 1;
+}
+
+.entry-item {
+    margin-bottom: 14px;
+}
+
+.entry-title {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: var(--fs-entry-title);
+    margin-bottom: 2px;
+    color: #000;
+}
+
+.entry-text {
+    font-family: var(--font-body);
+    font-size: var(--fs-entry-text);
+    line-height: 1.45;
+    text-align: justify;
+    text-align-last: left;
+    color: #000;
+    font-weight: 400;
+}
+
+/* ============================================================
+   FOOTER (only on last page)
+   ============================================================ */
+
+.page-footer {
+    margin-top: auto;
+    padding-top: 20px;
+    text-align: right;
+    font-family: var(--font-body);
+    font-size: var(--fs-footer);
+    color: #000;
+    font-weight: 400;
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   PDF GENERATION OVERLAY
+   ============================================================ */
+
+.pdf-generating-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.pdf-generating-message {
+    background: #fff;
+    padding: 24px 40px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+
+@media print {
+    /* Reset everything for print */
+    body {
+        background: white !important;
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .editor-sidebar {
+        display: none !important;
+    }
+
+    .preview-area {
+        padding: 0 !important;
+        margin: 0 !important;
+        background: white !important;
+        overflow: visible !important;
+        display: block !important;
+        position: static !important;
+    }
+
+    #pdf-preview-container {
+        gap: 0 !important;
+        display: block !important;
+    }
+
+    #measurer {
+        display: none !important;
+    }
+
+    .protocol-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        margin: 0 !important;
+        padding: var(--margin-outer) !important;
+        box-shadow: none !important;
+        page-break-after: always;
+        page-break-inside: avoid;
+        overflow: visible !important;
+    }
+
+    .protocol-page:last-child {
+        page-break-after: auto;
+    }
+
+    .page-frame {
+        height: 100% !important;
+        overflow: visible !important;
+    }
+
+    /* Hide generating overlay if somehow visible */
+    .pdf-generating-overlay {
+        display: none !important;
+    }
+
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 900px) {
+    body {
+        flex-direction: column;
+    }
+
+    .editor-sidebar {
+        width: 100%;
+        min-width: unset;
+        max-height: 50vh;
+    }
+
+    .preview-area {
+        padding: 15px;
+    }
+
+    .protocol-page {
+        width: 100%;
+        height: auto;
+        min-height: var(--page-h);
+    }
+}
