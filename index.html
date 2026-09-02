@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SV FWS FFM Protokoll</title>
+    <meta name="description" content="Protokollgenerator der Schülervertretung der FWS Frankfurt.">
     <!-- Fonts: Courier Prime for headings, Inter for body -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     <!-- PDF via native browser print -->
     <link rel="stylesheet" href="style.css">
@@ -15,72 +18,119 @@
     <div class="editor-sidebar">
         <div class="sidebar-header">
             <h1>SV PROTOKOLL</h1>
-            <div class="version-tag">v3.0</div>
+            <div class="version-tag">v4.0</div>
         </div>
 
         <div class="sidebar-content">
-            
-            <!-- 1. DATUM & AUTOR -->
+
+            <!-- 1. ECKDATEN -->
             <div class="editor-card">
-                <h3 class="card-label">Daten &amp; Autor</h3>
+                <h3 class="card-label">Eckdaten &amp; Autor</h3>
                 <div class="field-group">
-                    <div>
-                        <label class="field-label">Sitzungsdatum (Header)</label>
-                        <input type="date" id="in-meeting-date" class="field-input" oninput="updatePreview()">
+                    <div class="field-row">
+                        <div>
+                            <label class="field-label" for="in-meeting-date">Sitzungsdatum</label>
+                            <input type="date" id="in-meeting-date" class="field-input">
+                        </div>
+                        <div>
+                            <label class="field-label" for="in-print-date">Erstellt am</label>
+                            <input type="date" id="in-print-date" class="field-input">
+                        </div>
                     </div>
                     <div>
-                        <label class="field-label">Erstellt am (Footer)</label>
-                        <input type="date" id="in-print-date" class="field-input" oninput="updatePreview()">
+                        <label class="field-label" for="in-author">Protokollant*in</label>
+                        <input type="text" id="in-author" class="field-input" placeholder="Max Mustermann">
+                    </div>
+                    <div class="field-row">
+                        <div>
+                            <label class="field-label" for="in-time-from">Beginn</label>
+                            <input type="time" id="in-time-from" class="field-input">
+                        </div>
+                        <div>
+                            <label class="field-label" for="in-time-to">Ende</label>
+                            <input type="time" id="in-time-to" class="field-input">
+                        </div>
                     </div>
                     <div>
-                        <label class="field-label">Autor</label>
-                        <input type="text" id="in-author" class="field-input" placeholder="Max Mustermann" oninput="updatePreview()">
+                        <label class="field-label" for="in-location">Ort <span class="field-hint">optional</span></label>
+                        <input type="text" id="in-location" class="field-input" placeholder="SV-Raum">
                     </div>
                 </div>
             </div>
 
-            <!-- 3. ANWESENHEIT -->
+            <!-- 2. ANWESENHEIT -->
             <div class="editor-card">
                 <div class="card-header-row">
                     <h3 class="card-label">Anwesenheit</h3>
-                    <button onclick="clearAtt()" class="btn-reset">Reset</button>
+                    <div class="card-header-actions">
+                        <span class="pill" id="att-count">0 anwesend</span>
+                        <button type="button" id="btn-clear-att" class="btn-reset">Reset</button>
+                    </div>
                 </div>
                 <div id="att-input-container" class="att-grid">
                     <!-- JS fills this -->
                 </div>
             </div>
 
-            <!-- 4. INHALT -->
+            <!-- 3. INHALT -->
             <div>
                 <div class="card-header-row" style="margin-bottom: 8px;">
                     <h3 class="card-label">Protokollpunkte</h3>
-                    <button onclick="addSection()" class="btn-add">+ Punkt</button>
+                    <button type="button" id="btn-add-section" class="btn-add">+ Punkt</button>
                 </div>
                 <div id="sections-list" class="sections-list">
                     <!-- JS fills this -->
                 </div>
+                <p id="sections-empty" class="empty-hint" hidden>
+                    Noch keine Punkte. Mit „+ Punkt“ den ersten Tagesordnungspunkt anlegen.
+                </p>
+            </div>
+
+            <!-- 4. DATEN -->
+            <div class="editor-card">
+                <h3 class="card-label">Daten</h3>
+                <div class="data-actions">
+                    <button type="button" id="btn-export" class="btn-ghost">Export (.json)</button>
+                    <button type="button" id="btn-import" class="btn-ghost">Import</button>
+                    <button type="button" id="btn-reset-all" class="btn-ghost btn-ghost-danger">Alles zurücksetzen</button>
+                </div>
+                <input type="file" id="import-file" accept="application/json,.json" hidden>
             </div>
 
         </div>
 
         <div class="sidebar-footer">
-            <button onclick="generatePDF()" id="btn-pdf" class="btn-pdf">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4m4-5 5 5 5-5m-5 5V3"></path></svg>
-                PDF Herunterladen
+            <button type="button" id="btn-pdf" class="btn-pdf">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4m4-5 5 5 5-5m-5 5V3"></path></svg>
+                PDF herunterladen
             </button>
+            <p class="print-hint">Im Druckdialog „Hintergrundgrafiken“ aktivieren und Ränder auf „Keine“ stellen.</p>
         </div>
     </div>
 
     <!-- PREVIEW AREA -->
     <div class="preview-area">
-        <!-- Hidden measurer for calculating content heights -->
-        <div id="measurer" aria-hidden="true"></div>
-        
-        <!-- Pages rendered by JS -->
-        <div id="pdf-preview-container">
-            <!-- .protocol-page elements inserted here -->
+
+        <!-- Preview toolbar -->
+        <div class="preview-toolbar">
+            <span class="preview-status" id="preview-status">1 Seite</span>
+            <div class="zoom-controls">
+                <button type="button" id="btn-zoom-out" class="zoom-btn" title="Verkleinern" aria-label="Verkleinern">−</button>
+                <button type="button" id="btn-zoom-fit" class="zoom-btn zoom-value" title="Einpassen">100&nbsp;%</button>
+                <button type="button" id="btn-zoom-in" class="zoom-btn" title="Vergrößern" aria-label="Vergrößern">+</button>
+            </div>
+        </div>
+
+        <div class="preview-scroll" id="preview-scroll">
+            <!-- Pages rendered by JS -->
+            <div id="pdf-preview-container">
+                <!-- .protocol-page elements inserted here -->
+            </div>
         </div>
     </div>
+
+    <!-- Off-screen probe pages used to measure real layout heights -->
+    <div id="measure-host" aria-hidden="true"></div>
 
     <script src="script.js"></script>
 </body>
