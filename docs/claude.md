@@ -22,7 +22,7 @@ installieren, wenn du es in beiden nutzen willst.
 |---|---|---|
 | **Claude Code** (Terminal) | Befehle | `claude plugin marketplace add ProfessorQuantumUniverse/SV`<br>`claude plugin install sv-protokoll@sv-fws-ffm` |
 | **Desktop-App, Code-Modus** | Oberfläche | Plugins → Marketplace hinzufügen: `ProfessorQuantumUniverse/SV` → **SV-Protokoll** installieren |
-| **Desktop-App, Chat-Modus** | Oberfläche | ebenso: Plugins → Marketplace `ProfessorQuantumUniverse/SV` → **SV-Protokoll** installieren |
+| **Desktop-App, Chat-Modus** | Oberfläche | 1. Plugin wie oben installieren (bringt die Skills)<br>2. **MCP-Server extra installieren**, siehe unten (optional) |
 
 - Die `/plugin`-Befehle gibt es nur im interaktiven Terminal (`claude`). In der Desktop-App
   geht es über die Oberfläche.
@@ -33,9 +33,48 @@ installieren, wenn du es in beiden nutzen willst.
   (nur für PDFs). Fehlt der MCP-Server, erzeugen die Skills den Link mit dem beiliegenden
   Python-Skript.
 
-**Ohne Plugin (claude.ai im Browser/Handy):** `npm run dist` erzeugt `dist/skills/*.zip`.
-Lade sie bei claude.ai als Skills hoch (Code-Ausführung muss aktiv sein). `dist/sv-protokoll.mcpb`
-ist eine Alternative für den Chat-Modus, falls du dort nur den MCP-Server ohne Plugin willst.
+### MCP-Server im Chat-Modus
+
+Im Chat-Modus kommen über das Plugin **nur die Skills** an. Die laufen in der Cloud-Sandbox
+von claude.ai, und den lokalen MCP-Server startet die App dafür nicht. Links, `diff` und
+`preview` funktionieren trotzdem, weil die Skills dann das Python-Skript nutzen. Nur für
+**PDF-Export** und **Dateien im Downloads-Ordner** brauchst du den MCP-Server lokal. Der kommt
+als Desktop-Erweiterung dazu:
+
+1. Im Repo `npm run dist` ausführen. Das erzeugt `dist/sv-protokoll.mcpb`.
+2. In der Desktop-App **Einstellungen → Erweiterungen** öffnen und die `.mcpb` installieren
+   (Doppelklick auf die Datei oder per Drag & Drop ins Fenster).
+3. Beim Installieren den **Zielordner** für JSON und PDF bestätigen (Standard: Downloads) und
+   die Erweiterung aktivieren.
+4. Neuen Chat öffnen. Unter den Tools sollte jetzt **SV-Protokoll** stehen.
+
+Nach einem Update (neue `version`) die `.mcpb` neu bauen und erneut installieren. Anders als
+das Plugin aktualisiert sie sich nicht selbst.
+
+<details>
+<summary>Alternative ohne .mcpb: Eintrag in claude_desktop_config.json</summary>
+
+Einstellungen → Entwickler → Konfiguration bearbeiten (Windows:
+`%APPDATA%\Claude\claude_desktop_config.json`), Pfad an deinen Klon anpassen, App neu starten:
+
+```json
+{
+  "mcpServers": {
+    "sv-protokoll": {
+      "command": "node",
+      "args": ["C:\\Users\\<du>\\repos\\SV\\plugin\\mcp\\server.mjs"]
+    }
+  }
+}
+```
+
+Vorteil: `git pull` reicht für Updates. Voraussetzung: Node im PATH.
+</details>
+
+### Ohne Plugin (claude.ai im Browser/Handy)
+
+`npm run dist` erzeugt `dist/skills/*.zip`.
+Lade sie bei claude.ai als Skills hoch (Code-Ausführung muss aktiv sein).
 
 ## Benutzung
 
