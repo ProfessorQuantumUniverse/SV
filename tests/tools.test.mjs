@@ -353,6 +353,36 @@ await test('Komfort: Link rein → Markdown-Link raus', async () => {
     await s.stop();
 });
 
+await test('Zielordner: Platzhalter werden aufgelöst, nie im Arbeitsordner', async () => {
+    /* So kam der Bug zustande: "${HOME}/Downloads" unaufgelöst, Arbeitsordner system32. */
+    const s = startServer({ SV_TEST_OUT: TMP, SV_OUTPUT_DIR: '${SV_TEST_OUT}/ziel' });
+    await s.request('initialize', { protocolVersion: '2025-06-18' });
+    const saved = await s.request('tools/call', { name: 'protokoll_save_json', arguments: { protokoll: example } });
+    check('${VAR} im Zielordner aufgelöst', saved.result.structuredContent?.path === join(TMP, 'ziel', 'sv-protokoll-2026-01-27.json'), text(saved));
+    const rel = await s.request('tools/call', { name: 'protokoll_save_json', arguments: { protokoll: example, pfad: 'unter/datei' } });
+    check('relativer Name landet im Zielordner', rel.result.structuredContent?.path === join(TMP, 'ziel', 'unter', 'datei.json'), text(rel));
+    const bad = await s.request('tools/call', { name: 'protokoll_save_json', arguments: { protokoll: example, pfad: '${GIBTS_NICHT}/x.json' } });
+    check('unbekannter Platzhalter → klarer Fehler', bad.result.isError && /Platzhalter/.test(text(bad)), text(bad));
+    await s.stop();
+
+    /* Unaufgelöster Platzhalter im Zielordner → Standard statt kaputtem Pfad. */
+    const s2 = startServer({ SV_OUTPUT_DIR: '${user_config.output_dir}' });
+    await s2.request('initialize', { protocolVersion: '2025-06-18' });
+    const abs = await s2.request('tools/call', { name: 'protokoll_save_json', arguments: { protokoll: example, pfad: join(TMP, 'abs.json') } });
+    check('absoluter Pfad trotz kaputter Konfiguration', abs.result.structuredContent?.path === join(TMP, 'abs.json'), text(abs));
+
+    const pdf = await s2.request('tools/call', { name: 'protokoll_render_pdf', arguments: { protokoll: example, pfad: join(TMP, 'x.pdf') } });
+    check('PDF-Fehler liefert den Link als Ausweg',
+        pdf.result.isError !== true || /PDF herunterladen/.test(text(pdf)) && /#import=/.test(text(pdf)), text(pdf));
+    await s2.stop();
+
+    const s3 = startServer({ SV_BROWSER: join(TMP, 'kein-browser.exe') });
+    await s3.request('initialize', { protocolVersion: '2025-06-18' });
+    const fail = await s3.request('tools/call', { name: 'protokoll_render_pdf', arguments: { protokoll: example, pfad: join(TMP, 'y.pdf') } });
+    check('ohne Browser: Fehler + Link', fail.result.isError === true && /PDF herunterladen/.test(text(fail)) && /\[SV-Protokoll vom 27\.1\.2026 öffnen\]\(/.test(text(fail)), text(fail));
+    await s3.stop();
+});
+
 await test('Skills: Ausgabe-Regeln und Skriptpfad je Ziel', () => {
     const skill = readFileSync(join(ROOT, 'plugin', 'skills', 'protokoll-ueberarbeiten', 'SKILL.md'), 'utf8');
     check('Link-Regel enthalten', /Ergebnis immer als Link/.test(skill) && /Kein JSON-Codeblock/.test(skill));

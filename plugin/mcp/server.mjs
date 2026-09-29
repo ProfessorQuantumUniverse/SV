@@ -32,7 +32,9 @@ const INSTRUCTIONS = `Werkzeuge für Sitzungsprotokolle der SV FWS Frankfurt im 
 - Ergebnis ist IMMER ein Link: das fertige Protokoll an protokoll_link geben (prüft selbst) und den gelieferten Markdown-Link in die Antwort übernehmen. Kein JSON im Chat, außer es wird ausdrücklich verlangt.
 - Schickt jemand einen Link (…#import=…): mit protokoll_decode_link lesen, bearbeiten, als neuen Link zurückgeben.
 - Vor dem Schreiben oder Umformulieren einmal protokoll_format aufrufen (Datenformat + Stilleitfaden).
-- protokoll_save_json / protokoll_render_pdf nur auf Wunsch. Niemals Namen, Zahlen oder Beschlüsse erfinden.`;
+- Diese Tools laufen lokal. Nur sie können ein PDF erzeugen (protokoll_render_pdf) oder Dateien auf dem Rechner speichern (protokoll_save_json) – beides nur auf Wunsch. Link, Prüfen, diff und preview gehen gleichwertig auch mit dem Skript der Skills; nicht beides doppelt aufrufen.
+- Die Skills protokoll-erstellen / -korrigieren / -ueberarbeiten enthalten die inhaltlichen Regeln (Stil, Kürzen, Glossar) – bei Protokollarbeit den passenden Skill nutzen, falls verfügbar.
+- Niemals Namen, Zahlen oder Beschlüsse erfinden.`;
 
 /* ── HILFSFUNKTIONEN ─────────────────────────────────────── */
 
@@ -63,15 +65,34 @@ function requireValid(data) {
     return result;
 }
 
+/* Löst ~, ${HOME}, $HOME, %USERPROFILE% & Co. auf. Hosts reichen Platzhalter
+   aus Konfigurationen nicht immer ersetzt durch (z. B. "${HOME}/Downloads" oder
+   "${user_config.output_dir}" aus der .mcpb). Bleibt danach ein Platzhalter
+   übrig, ist der Wert unbrauchbar → null. */
+function expandVars(value) {
+    let p = String(value || '').trim();
+    if (!p) return null;
+    const home = homedir();
+    p = p.replace(/^~(?=$|[\\/])/, home)
+        .replace(/\$\{(HOME|USERPROFILE)\}|\$(HOME|USERPROFILE)\b|%(HOME|USERPROFILE)%/gi, home)
+        .replace(/\$\{(\w+)\}|%(\w+)%/g, (m, a, b) => process.env[a || b] ?? m);
+    return /\$\{[^}]*\}|%\w+%/.test(p) ? null : p;
+}
+
 function outputDir() {
-    if (process.env.SV_OUTPUT_DIR) return process.env.SV_OUTPUT_DIR;
+    const configured = expandVars(process.env.SV_OUTPUT_DIR);
+    /* Relativ hieße: relativ zum Arbeitsordner des Hosts (oft C:\Windows\system32). */
+    if (configured) return isAbsolute(configured) ? configured : resolve(homedir(), configured);
     const downloads = join(homedir(), 'Downloads');
     return existsSync(downloads) ? downloads : homedir();
 }
 
-/* Nie still überschreiben: bei Kollision -2, -3 … anhängen. */
+/* Nie still überschreiben: bei Kollision -2, -3 … anhängen.
+   Relative Namen landen immer im Zielordner, nie im Arbeitsordner. */
 function targetPath(requested, fallbackName, ext) {
-    let p = requested ? String(requested) : fallbackName;
+    let p = requested ? expandVars(requested) : null;
+    if (requested && !p) throw new UserError(`Pfad enthält einen unbekannten Platzhalter: ${requested}`);
+    p = p || fallbackName;
     if (!p.toLowerCase().endsWith(ext)) p += ext;
     p = isAbsolute(p) ? p : resolve(outputDir(), p);
     const { dir, name } = parse(p);
@@ -259,8 +280,16 @@ const TOOLS = [
         async run({ protokoll, pfad }) {
             const data = parseProtokoll(protokoll);
             requireValid(data);
-            const file = targetPath(pfad, baseName(data), '.pdf');
-            const { pages } = await renderPdf(normalise(data), file, { appUrl: APP_URL });
+            let file;
+            let pages;
+            try {
+                file = targetPath(pfad, baseName(data), '.pdf');
+                ({ pages } = await renderPdf(normalise(data), file, { appUrl: APP_URL }));
+            } catch (err) {
+                throw new UserError(`PDF konnte nicht erzeugt werden: ${err.message}\n` +
+                    `Ausweg ohne Tool – Link öffnen und „PDF herunterladen“ klicken (identisches Ergebnis):\n` +
+                    `[${linkLabel(data)}](${makeLink(data, APP_URL)})`);
+            }
             return { text: `PDF gespeichert: ${file} (${pages} ${pages === 1 ? 'Seite' : 'Seiten'})`, structured: { path: file, pages } };
         }
     }

@@ -38,6 +38,25 @@ Kleinigkeiten zusammenfassen („12 Kommafehler“). Inhaltliche Auffälligkeite
 (Widersprüche, fehlende Ergebnisse, sensible Inhalte) separat als **Hinweise**,
 ohne sie selbst zu ändern.
 
+## MCP-Tools oder Skript?
+
+Dieser Skill sagt, **was** zu tun ist. Ausgeführt wird mit einem von zwei Werkzeugsätzen,
+die dasselbe liefern: den MCP-Tools `protokoll_*` (laufen auf dem Rechner der Nutzerin
+bzw. des Nutzers) oder dem Skript `${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py` (läuft in deiner Code-Umgebung).
+Einmal pro Aufgabe entscheiden, nicht beides doppelt aufrufen:
+
+| Aufgabe | Wahl |
+|---|---|
+| Link lesen/erzeugen, prüfen, `diff`, `preview` | MCP-Tools, falls vorhanden (ein Aufruf, keine Hilfsdateien). Sonst das Skript – gleichwertig. |
+| **PDF** | **Nur** `protokoll_render_pdf`. Ohne MCP: kein Ersatz versuchen (kein Python-PDF, keine eigene Gestaltung), sondern auf den Link verweisen: öffnen → „PDF herunterladen“. Ergebnis identisch. |
+| **Datei auf dem Rechner** (JSON in Downloads) | **Nur** `protokoll_save_json`. Dateien aus deiner Code-Umgebung liegen nicht auf dem Rechner – dann höchstens als Chat-Download anbieten. |
+| Schreiben, Kürzen, Korrigieren | Kein Werkzeug nötig – das ist deine Arbeit nach diesem Skill. |
+
+- MCP-Tool meldet einen Fehler? Für Links/Prüfen/`diff`/`preview` aufs Skript wechseln. Für
+  PDF/Datei den Fehler kurz nennen und den Link als Weg anbieten. Einen abweichenden
+  Zielpfad nur verwenden, wenn die Person ihn nennt.
+- PDF oder Datei nur auf ausdrücklichen Wunsch – der Link ist immer die Hauptausgabe.
+
 ## Ergebnis immer als Link
 
 Das Ergebnis ist **immer ein Link**, der das Protokoll direkt im Generator öffnet –
@@ -53,8 +72,6 @@ wenn ausdrücklich danach gefragt wird.
    **Kein JSON-Codeblock** in der Antwort.
 3. Nur wenn weder Tool noch Python verfügbar sind: JSON als Datei ausgeben und auf
    „Import“ in der Seite hinweisen.
-
-Auf Wunsch zusätzlich: JSON-Datei (`protokoll_save_json`), PDF (`protokoll_render_pdf`).
 
 ## Helfer vor dem Ausliefern
 - **Bericht bei bestehenden Protokollen:** `protokoll_diff` bzw.

@@ -85,6 +85,35 @@ Lade sie bei claude.ai als Skills hoch (Code-Ausführung muss aktiv sein).
 | „Kürze `<Link>`“, „Mach Punkt 3 professioneller“, „Ergänze bei SV-Raum, dass …“ | `protokoll-ueberarbeiten` | Link + wichtigste Änderungen |
 | „Und als PDF, bitte“ | – | PDF im Downloads-Ordner |
 
+### Mini-Prompting-Guide
+
+Die Skills kennen Format, Stil und Glossar, das musst du nicht erklären. Gute Prompts sagen
+nur **was**, **woran** und **mit welchen Grenzen**:
+
+| Statt … | … besser | Warum |
+|---|---|---|
+| „Mach das besser“ | „**Kürze** `<Link>` um etwa ein Drittel, Beschlüsse bleiben“ | Klarer Modus + Maß; „kürzen“ und „korrigieren“ sind verschiedene Skills |
+| „Korrigier mal“ + JSON | „Korrigiere `<Link>`, **nur Rechtschreibung**“ | Link statt JSON; Korrektur ändert keinen Stil |
+| „Protokoll von heute“ + Notizen | „Erstelle das Protokoll vom **2.9.**, Protokollant **Lorenzo**, anwesend: 9B Anna, Ben …“ + Notizen | Eckdaten kann Claude nicht erraten, sonst gibt es `[?]` |
+| „Punkt 3 ändern“ | „In **SV-Aktion**: Abstimmung Bowling 12/3/1 ergänzen“ | Titel statt Nummer, konkrete Fakten |
+| „Ist das gut so?“ | „Zeig mir den **diff**“ / „Zeig die **Vorschau**“ | Liefert Wortzahl vorher → nachher bzw. Klartext zum Gegenlesen |
+
+- **Ein Wunsch pro Runde** geht am zuverlässigsten: erst korrigieren, dann kürzen.
+- **Weiterarbeiten:** einfach den neuen Link zurückschicken („jetzt noch förmlicher“).
+- **Neue Begriffe/Abkürzungen** einmal im Chat erklären und dauerhaft in `shared/glossar.md`
+  eintragen, sonst fragt Claude jedes Mal nach.
+- **PDF** nur bei Bedarf dazusagen („…und als PDF“). Das braucht den MCP-Server; ohne ihn
+  öffnest du den Link und klickst „PDF herunterladen“.
+
+### Skills und MCP-Server – wer macht was?
+
+**Skills** = das Wissen (Stil, Kürzen, Glossar, Ablauf). **MCP-Server** = lokale Werkzeuge.
+Link, Prüfen, `diff` und `preview` gehen mit beiden gleich gut: Ohne MCP nimmt Claude das
+Python-Skript. **Nur mit MCP** gehen PDF-Export und Dateien direkt in deinem
+Downloads-Ordner.
+
+### Tipps
+
 - Den Link zu deinem aktuellen Entwurf holst du dir in der Seite über **Link kopieren**.
 - Öffnest du einen Link, während schon ein anderer Entwurf in der Seite ist, fragt die Seite,
   bevor sie ihn ersetzt.

@@ -196,8 +196,7 @@ if (BUILD_DIST) {
             output_dir: {
                 type: 'directory',
                 title: 'Zielordner',
-                description: 'Wohin JSON- und PDF-Dateien gespeichert werden.',
-                default: '${HOME}/Downloads',
+                description: 'Wohin JSON- und PDF-Dateien gespeichert werden. Leer lassen = Downloads-Ordner.',
                 required: false
             }
         },
