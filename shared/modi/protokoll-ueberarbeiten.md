@@ -1,6 +1,6 @@
 ---
 name: protokoll-ueberarbeiten
-description: Überarbeitet ein bestehendes SV-Protokoll (FWS Frankfurt, Format des SV-Protokoll-Generators) gründlich - formuliert um, strukturiert neu und hebt es auf professionelles Niveau nach dem SV-Stilleitfaden, ohne Fakten zu verändern. Verwenden bei "verbessern/umformulieren/professioneller machen/kürzen/überarbeiten" eines SV-Protokolls.
+description: Überarbeitet ein bestehendes SV-Protokoll (Schülervertretung FWS Frankfurt, SV-Protokoll-Generator) - formuliert um, kürzt, strukturiert neu, ergänzt/ändert einzelne Punkte oder hebt es auf professionelles Niveau nach dem SV-Stilleitfaden. Verwenden bei "kürze/verbessere/formuliere um/mach professioneller/überarbeite/ändere Punkt X". Auch wenn nur ein Link auf den SV-Protokoll-Generator (professorquantumuniverse.github.io/SV/#import=...) geschickt wird. Ergebnis ist immer ein neuer Link.
 argument-hint: "[Protokoll-JSON, Link oder Dateipfad] [Wünsche, z. B. kürzer]"
 title: SV-Protokoll überarbeiten
 ---
@@ -30,7 +30,11 @@ bleiben exakt dieselben.**
 - Fehlt einem Punkt das Ergebnis, nicht eines ausdenken: „Ein Ergebnis steht noch aus.“
   oder `[?]` und im Chat nachfragen.
 - Eckdaten und Anwesenheit nur formal korrigieren.
+- **Kürzen:** Verlauf, Wiederholungen und Nebensächliches straffen – Ergebnisse, Beschlüsse,
+  Zuständigkeiten, Termine und Zahlen bleiben immer stehen.
+- Inhaltliche Änderungen, die ausdrücklich verlangt werden (Punkt ergänzen, Datum ändern,
+  Namen nachtragen), werden übernommen – aber nur mit den genannten Fakten.
 
 ## Bericht
-Zusätzlich zum Abschluss: die 3–6 wichtigsten Änderungen in Stichpunkten
+Zusätzlich zum Link: die 3–6 wichtigsten Änderungen in Stichpunkten
 (z. B. „Punkt ‚Raum‘ und ‚Schlüssel‘ zu ‚SV-Raum‘ zusammengeführt“) und offene Fragen.

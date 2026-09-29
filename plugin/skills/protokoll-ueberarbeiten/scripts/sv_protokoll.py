@@ -5,7 +5,8 @@ Python 3.8+, nur Standardbibliothek. Gegenstück zu plugin/mcp/lib/protokoll.mjs
 (gleiche Fehlerpfade, gleiche Hinweis-Codes, gleiche Link-Kodierung).
 
   python sv_protokoll.py validate protokoll.json   # Fehler + Hinweise, Exit 1 bei Fehlern
-  python sv_protokoll.py link protokoll.json       # Link, der das Protokoll im Generator öffnet
+  python sv_protokoll.py link protokoll.json       # Markdown-Link, der das Protokoll im Generator öffnet
+                                                   # (--raw: nur die URL)
   python sv_protokoll.py decode "<link>"           # Link -> JSON
   python sv_protokoll.py normalise protokoll.json  # in Export-Form bringen (stdout)
 
@@ -303,6 +304,14 @@ def make_link(data, app_url=APP_URL):
     return "%s#%s=%s" % (app_url.split("#")[0], LINK_PARAM, encode_payload(normalise(data)))
 
 
+def link_label(data):
+    parts = str(data.get("meetingDate") or "").split("-")
+    if len(parts) == 3 and all(parts):
+        y, m, d = parts
+        return "SV-Protokoll vom %d.%d.%s öffnen" % (int(d), int(m), y)
+    return "SV-Protokoll öffnen"
+
+
 def extract_payload(link):
     link = link.strip()
     m = re.search(r"(?:^|[#&])%s=([A-Za-z0-9_-]+)" % LINK_PARAM, link)
@@ -350,7 +359,11 @@ def main(argv):
             print("Fehler   %s: %s" % (e["path"], e["message"]), file=sys.stderr)
         return 1
     if cmd == "link":
-        print(make_link(data))
+        url = make_link(data)
+        if "--raw" in argv:
+            print(url)
+        else:
+            print("[%s](%s)" % (link_label(data), url))
     else:
         print(json.dumps(normalise(data), ensure_ascii=False, indent=2))
     return 0

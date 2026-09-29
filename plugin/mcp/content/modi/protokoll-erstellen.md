@@ -1,13 +1,13 @@
 ---
 name: protokoll-erstellen
-description: Erstellt ein neues SV-Protokoll (FWS Frankfurt) im Format des SV-Protokoll-Generators aus Notizen, Stichpunkten, Chatverläufen oder dem Transkript einer Audioaufnahme. Verwenden, wenn ein Sitzungsprotokoll der Schülervertretung neu geschrieben, aus Mitschrift/Notizen/Transkript erstellt oder "from scratch" aufgesetzt werden soll.
+description: Erstellt ein neues SV-Protokoll (Schülervertretung FWS Frankfurt) im Format des SV-Protokoll-Generators aus Notizen, Stichpunkten, Chatverläufen oder dem Transkript einer Audioaufnahme. Verwenden, wenn ein Sitzungsprotokoll neu geschrieben, aus Mitschrift/Notizen/Transkript erstellt oder "from scratch" aufgesetzt werden soll. Ergebnis ist immer ein Link, der das Protokoll im Generator öffnet.
 argument-hint: "[Notizen, Transkript oder Dateipfad]"
 title: SV-Protokoll erstellen
 ---
 # SV-Protokoll erstellen
 
 Aus Rohmaterial (Notizen, Stichpunkte, Transkript) wird ein fertiges, formgetreues
-SV-Protokoll als JSON für den SV-Protokoll-Generator.
+SV-Protokoll für den SV-Protokoll-Generator – ausgeliefert als Link.
 
 ## Vorgehen
 1. **Material sichten.** Notizen, Transkript, Chatverlauf, altes Protokoll – alles zählt.

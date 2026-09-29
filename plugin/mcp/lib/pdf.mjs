@@ -103,6 +103,9 @@ async function evaluate(cdp, expression) {
  * @returns {Promise<{path: string, pages: number}>}
  */
 export async function renderPdf(data, outPath, { appUrl, timeoutMs = 45000 } = {}) {
+    if (typeof WebSocket === 'undefined') {
+        throw new Error(`PDF braucht Node ≥ 22 (gefunden: ${process.version}). Link und JSON funktionieren trotzdem.`);
+    }
     const browserPath = findBrowser();
     const profileDir = mkdtempSync(join(tmpdir(), 'sv-protokoll-'));
     let proc;

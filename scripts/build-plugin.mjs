@@ -37,13 +37,32 @@ function splitFrontmatter(src) {
     return { fields, body: m[2] };
 }
 
-/* keys: welche Frontmatter-Felder der Skill bekommt. claude.ai
-   akzeptiert beim ZIP-Upload nur name/description. */
-function skillMarkdown(mode, keys) {
+/* Zwei Ziele mit unterschiedlichen Möglichkeiten:
+   - plugin: Claude Code / Desktop ersetzt ${CLAUDE_SKILL_DIR} und kennt
+     allowed-tools – Link-Erzeugung läuft ohne Rückfrage.
+   - zip:    claude.ai akzeptiert beim Upload nur name/description, der
+     Skriptpfad ist relativ zum Skill-Ordner. */
+const TARGETS = {
+    plugin: {
+        keys: ['name', 'description', 'argument-hint', 'allowed-tools'],
+        script: '${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py'
+    },
+    zip: { keys: ['name', 'description'], script: 'scripts/sv_protokoll.py' }
+};
+
+const MCP = 'mcp__plugin_sv-protokoll_sv-protokoll__';
+const ALLOWED_TOOLS = [
+    ...['protokoll_format', 'protokoll_validate', 'protokoll_link', 'protokoll_decode_link'].map(t => MCP + t),
+    ...['python', 'python3', 'py'].map(py => `Bash(${py} \${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py *)`)
+].join(' ');
+
+function skillMarkdown(mode, target) {
+    const { keys, script } = TARGETS[target];
     const { fields, body } = splitFrontmatter(read(`shared/modi/${mode}.md`));
+    fields['allowed-tools'] = ALLOWED_TOOLS;
     const front = keys.filter(k => fields[k]).map(k => `${k}: ${fields[k]}`).join('\n');
     return `---\n${front}\n---\n<!-- Generiert aus shared/modi/${mode}.md und shared/ausgabe.md – dort bearbeiten, dann \`npm run build\`. -->\n\n` +
-        `${body.trim()}\n\n${read('shared/ausgabe.md').trim()}\n`;
+        `${body.trim()}\n\n${read('shared/ausgabe.md').trim().replaceAll('{{SCRIPT}}', script)}\n`;
 }
 
 const REFERENCES = {
@@ -53,8 +72,8 @@ const REFERENCES = {
     'schema.json': 'schema/protokoll.schema.json'
 };
 
-function skillFiles(mode, keys) {
-    const files = { 'SKILL.md': skillMarkdown(mode, keys), 'scripts/sv_protokoll.py': read('shared/sv_protokoll.py') };
+function skillFiles(mode, target) {
+    const files = { 'SKILL.md': skillMarkdown(mode, target), 'scripts/sv_protokoll.py': read('shared/sv_protokoll.py') };
     Object.entries(REFERENCES).forEach(([name, src]) => { files[`references/${name}`] = read(src); });
     return files;
 }
@@ -65,7 +84,7 @@ function wanted() {
     Object.entries(content).forEach(([name, src]) => { out[`mcp/content/${name}`] = read(src); });
     MODES.forEach(mode => {
         out[`mcp/content/modi/${mode}.md`] = read(`shared/modi/${mode}.md`);
-        Object.entries(skillFiles(mode, ['name', 'description', 'argument-hint']))
+        Object.entries(skillFiles(mode, 'plugin'))
             .forEach(([name, text]) => { out[`skills/${mode}/${name}`] = text; });
     });
     return out;
@@ -147,7 +166,7 @@ if (BUILD_DIST) {
     mkdirSync(join(DIST, 'skills'), { recursive: true });
 
     MODES.forEach(mode => {
-        const files = skillFiles(mode, ['name', 'description']);
+        const files = skillFiles(mode, 'zip');
         const entries = Object.fromEntries(Object.entries(files).map(([p, t]) => [`${mode}/${p}`, t]));
         writeFileSync(join(DIST, 'skills', `${mode}.zip`), zip(entries));
     });
@@ -189,7 +208,7 @@ if (BUILD_DIST) {
             { name: 'protokoll_save_json', description: 'Als JSON-Datei speichern' },
             { name: 'protokoll_render_pdf', description: 'PDF mit lokalem Chrome/Edge erzeugen' }
         ],
-        compatibility: { platforms: ['darwin', 'win32', 'linux'], runtimes: { node: '>=22.0.0' } }
+        compatibility: { platforms: ['darwin', 'win32', 'linux'], runtimes: { node: '>=18.0.0' } }
     };
     const serverFiles = listFiles(join(PLUGIN, 'mcp'))
         .map(p => relative(join(PLUGIN, 'mcp'), p).split('\\').join('/'));

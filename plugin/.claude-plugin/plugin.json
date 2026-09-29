@@ -1,7 +1,7 @@
 {
   "name": "sv-protokoll",
   "displayName": "SV-Protokoll",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Formgetreue SV-Protokolle (FWS Frankfurt) mit Claude: erstellen aus Notizen/Transkript, korrigieren, überarbeiten – inkl. Prüfung, Import-Link und PDF.",
   "author": {
     "name": "ProfessorQuantumUniverse",

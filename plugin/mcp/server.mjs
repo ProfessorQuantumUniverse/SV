@@ -29,15 +29,22 @@ const SUPPORTED_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-0
 const APP_URL = process.env.SV_APP_URL || DEFAULT_APP_URL;
 
 const INSTRUCTIONS = `Werkzeuge für Sitzungsprotokolle der SV FWS Frankfurt im Format des SV-Protokoll-Generators (${APP_URL}).
-Vor dem Schreiben oder Ändern eines Protokolls einmal protokoll_format aufrufen (Datenformat + Stilleitfaden).
-Jedes Ergebnis mit protokoll_validate prüfen und dann mit protokoll_link als Link ausliefern (öffnet das Protokoll direkt im Generator); protokoll_save_json / protokoll_render_pdf nur auf Wunsch oder wenn Dateien gebraucht werden.
-Links aus „Link kopieren“ (…#import=…) mit protokoll_decode_link lesen. Niemals Namen, Zahlen oder Beschlüsse erfinden.`;
+- Ergebnis ist IMMER ein Link: das fertige Protokoll an protokoll_link geben (prüft selbst) und den gelieferten Markdown-Link in die Antwort übernehmen. Kein JSON im Chat, außer es wird ausdrücklich verlangt.
+- Schickt jemand einen Link (…#import=…): mit protokoll_decode_link lesen, bearbeiten, als neuen Link zurückgeben.
+- Vor dem Schreiben oder Umformulieren einmal protokoll_format aufrufen (Datenformat + Stilleitfaden).
+- protokoll_save_json / protokoll_render_pdf nur auf Wunsch. Niemals Namen, Zahlen oder Beschlüsse erfinden.`;
 
 /* ── HILFSFUNKTIONEN ─────────────────────────────────────── */
 
 class UserError extends Error {}
 
 function parseProtokoll(value) {
+    /* Bequemlichkeit: ein Link (…#import=…) wird direkt entpackt. */
+    if (typeof value === 'string' && /[#&]import=/.test(value)) {
+        try { return decodeLink(value); } catch (err) {
+            throw new UserError(`Link konnte nicht gelesen werden: ${err.message}`);
+        }
+    }
     if (typeof value === 'string') {
         try { return JSON.parse(value); } catch (err) {
             throw new UserError(`„protokoll“ ist kein gültiges JSON: ${err.message}`);
@@ -88,6 +95,11 @@ function formatIssues(result) {
     return lines.join('\n');
 }
 
+function linkLabel(data) {
+    const [y, m, d] = String(data.meetingDate || '').split('-');
+    return y && m && d ? `SV-Protokoll vom ${Number(d)}.${Number(m)}.${y} öffnen` : 'SV-Protokoll öffnen';
+}
+
 function summary(s) {
     return `${s.sections} Punkte (${s.topics.join(', ') || '–'}), ${s.attendees} Anwesende aus ${s.classes} Klassen, ` +
         `${s.voteTables} Abstimmungstabelle(n), ${s.words} Wörter` + (s.openQuestions ? `, ${s.openQuestions}× [?]` : '');
@@ -96,8 +108,7 @@ function summary(s) {
 /* ── TOOLS ───────────────────────────────────────────────── */
 
 const PROTOKOLL_ARG = {
-    description: 'Das Protokoll als JSON-Objekt im Format von protokoll_format.',
-    type: 'object'
+    description: 'Das Protokoll als JSON-Objekt im Format von protokoll_format – oder ein bestehender Link (…#import=…).'
 };
 
 const TOOLS = [
@@ -134,18 +145,25 @@ const TOOLS = [
     {
         name: 'protokoll_link',
         title: 'Import-Link erzeugen',
-        description: 'Erzeugt einen Link, der das Protokoll direkt im SV-Protokoll-Generator öffnet (Daten stecken komprimiert im #-Teil der URL und werden an keinen Server gesendet). Das Protokoll muss gültig sein.',
+        description: 'Standard-Ausgabe für jedes fertige Protokoll: prüft es und liefert einen Markdown-Link, der es direkt im SV-Protokoll-Generator öffnet. Den Link unverändert in die Antwort übernehmen. Bei Fehlern kommt statt des Links die Fehlerliste – korrigieren und erneut aufrufen.',
         inputSchema: { type: 'object', properties: { protokoll: PROTOKOLL_ARG }, required: ['protokoll'] },
         annotations: { readOnlyHint: true, openWorldHint: false },
         run({ protokoll }) {
             const data = parseProtokoll(protokoll);
             const result = requireValid(data);
             const link = makeLink(data, APP_URL);
-            const note = link.length > 16000
-                ? '\nHinweis: Der Link ist sehr lang – zusätzlich protokoll_save_json anbieten.' : '';
+            const markdown = `[${linkLabel(data)}](${link})`;
+            const lines = [
+                markdown,
+                '',
+                'Diesen Markdown-Link unverändert in die Antwort übernehmen (kein JSON zeigen).',
+                summary(result.stats)
+            ];
+            if (result.warnings.length) lines.push(formatIssues({ errors: [], warnings: result.warnings }));
+            if (link.length > 16000) lines.push('Der Link ist sehr lang – zusätzlich protokoll_save_json anbieten.');
             return {
-                text: `${link}\n\n${summary(result.stats)} · ${link.length} Zeichen${note}`,
-                structured: { link, length: link.length, stats: result.stats }
+                text: lines.join('\n'),
+                structured: { link, markdown, length: link.length, warnings: result.warnings, stats: result.stats }
             };
         }
     },
@@ -164,7 +182,11 @@ const TOOLS = [
             try { data = decodeLink(link); } catch (err) {
                 throw new UserError(`Link konnte nicht gelesen werden: ${err.message}`);
             }
-            return { text: JSON.stringify(data, null, 2), structured: { protokoll: data } };
+            return {
+                text: JSON.stringify(data, null, 2) +
+                    '\n\nNach der Bearbeitung mit protokoll_link wieder als Link zurückgeben.',
+                structured: { protokoll: data }
+            };
         }
     },
     {
@@ -255,7 +277,7 @@ const PROMPTS = [
 function promptText(p, args) {
     return [
         modeBody(p.mode),
-        readContent('ausgabe.md'),
+        readContent('ausgabe.md').replaceAll('{{SCRIPT}}', 'sv_protokoll.py'),
         'Lade zuerst mit dem Tool protokoll_format das Datenformat und den Stilleitfaden.',
         '---',
         p.input(args || {})

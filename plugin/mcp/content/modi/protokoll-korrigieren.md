@@ -1,6 +1,6 @@
 ---
 name: protokoll-korrigieren
-description: Korrigiert ein bestehendes SV-Protokoll (FWS Frankfurt, Format des SV-Protokoll-Generators) behutsam - nur Rechtschreibung, Grammatik, Zeichensetzung, Tippfehler und Formfehler, ohne Inhalt oder Formulierungen zu verändern. Verwenden bei "korrigiere/prüfe/Korrektur lesen" eines SV-Protokolls (JSON, Link oder Export).
+description: Korrigiert ein bestehendes SV-Protokoll (Schülervertretung FWS Frankfurt, SV-Protokoll-Generator) behutsam - nur Rechtschreibung, Grammatik, Zeichensetzung, Tippfehler und Formfehler, ohne Inhalt oder Formulierungen zu verändern. Verwenden bei "korrigiere/prüfe/Korrektur lesen/Fehler raus". Auch wenn nur ein Link auf den SV-Protokoll-Generator (professorquantumuniverse.github.io/SV/#import=...) geschickt wird. Ergebnis ist immer ein neuer Link.
 argument-hint: "[Protokoll-JSON, Link oder Dateipfad]"
 title: SV-Protokoll korrigieren
 ---
@@ -24,7 +24,7 @@ klingen wie vorher**. Wer es geschrieben hat, soll seinen Text wiedererkennen.
 - Abstimmungszahlen, auch wenn sie unplausibel wirken (→ nur im Chat anmerken).
 
 ## Bericht
-Zusätzlich zum Abschluss eine kompakte Änderungsliste, gruppiert nach Punkt:
+Zusätzlich zum Link eine kompakte Änderungsliste, gruppiert nach Punkt:
 `Podiumsdiskussion: „Podiumsdiskusssion“ → „Podiumsdiskussion“`. Bei sehr vielen
 Kleinigkeiten zusammenfassen („12 Kommafehler“). Inhaltliche Auffälligkeiten
 (Widersprüche, fehlende Ergebnisse, sensible Inhalte) separat als **Hinweise**,

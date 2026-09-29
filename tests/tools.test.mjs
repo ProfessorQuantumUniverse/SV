@@ -148,6 +148,9 @@ if (!PY) {
         const file = join(TMP, 'beispiel.json');
         writeFileSync(file, JSON.stringify(example));
         const link = py(['link', file]).stdout.trim();
+        check('Python gibt Markdown-Link aus', link.startsWith('[SV-Protokoll vom 27.1.2026 öffnen](https://') && link.endsWith(')'), link.slice(0, 60));
+        const raw = py(['link', file, '--raw']).stdout.trim();
+        check('--raw gibt nur die URL', /^https:\/\/\S+#import=[A-Za-z0-9_-]+$/.test(raw), raw.slice(0, 60));
         check('Python-Link == JS-Payload-Inhalt', JSON.stringify(decodeLink(link)) === JSON.stringify(normalise(example)), link.slice(0, 80));
         const back = py(['decode', makeLink(example)]);
         check('Python liest JS-Link', JSON.stringify(JSON.parse(back.stdout)) === JSON.stringify(normalise(example)), back.stderr);
@@ -219,7 +222,7 @@ await test('MCP: Handshake, Tools, Prompts, Ressourcen', async () => {
     check('Prompt-Titel aus Frontmatter', prompts[1].title === 'SV-Protokoll korrigieren', prompts[1].title);
     const pr = await s.request('prompts/get', { name: 'korrigieren', arguments: { protokoll: '{"x":1}' } });
     const body = pr.result.messages[0].content.text;
-    check('Prompt enthält Modus, Abschluss und Eingabe', /Minimal-invasive/.test(body) && /Abschluss/.test(body) && body.endsWith('{"x":1}'));
+    check('Prompt enthält Modus, Link-Regel und Eingabe', /Minimal-invasive/.test(body) && /Ergebnis immer als Link/.test(body) && !body.includes('{{SCRIPT}}') && body.endsWith('{"x":1}'));
     check('kein Frontmatter im Prompt', !/^---/.test(body));
 
     const res = (await s.request('resources/list')).result.resources.map(r => r.uri);
@@ -269,6 +272,43 @@ await test('MCP: prüfen, Link, lesen, speichern', async () => {
     const unknown = await s.request('tools/call', { name: 'gibtsnicht', arguments: {} });
     check('unbekanntes Tool', unknown.error && unknown.error.code === -32602);
     await s.stop();
+});
+
+await test('Komfort: Link rein → Markdown-Link raus', async () => {
+    const s = startServer({ SV_APP_URL: 'https://example.org/SV/' });
+    await s.request('initialize', { protocolVersion: '2025-06-18' });
+
+    const res = await s.request('tools/call', { name: 'protokoll_link', arguments: { protokoll: example } });
+    const out = res.result.structuredContent;
+    check('Markdown-Link mit Datum', out.markdown === `[SV-Protokoll vom 27.1.2026 öffnen](${out.link})`, out.markdown.slice(0, 60));
+    check('Antworttext beginnt mit dem Markdown-Link', text(res).startsWith(out.markdown));
+    check('Hinweis: kein JSON zeigen', /kein JSON/.test(text(res)));
+
+    /* Ein Link darf direkt als „protokoll“ übergeben werden. */
+    const again = await s.request('tools/call', { name: 'protokoll_link', arguments: { protokoll: out.link } });
+    check('Link als Eingabe akzeptiert', again.result.structuredContent && again.result.structuredContent.link === out.link, text(again));
+    const val = await s.request('tools/call', { name: 'protokoll_validate', arguments: { protokoll: out.link } });
+    check('auch beim Prüfen', val.result.structuredContent.valid === true);
+
+    const withWarn = await s.request('tools/call', { name: 'protokoll_link', arguments: { protokoll: { ...clone(example), author: '' } } });
+    check('Hinweise stehen beim Link', /no-author/.test(text(withWarn)), text(withWarn));
+
+    const dec = await s.request('tools/call', { name: 'protokoll_decode_link', arguments: { link: out.link } });
+    check('Lesen erinnert an Link-Rückgabe', /protokoll_link/.test(text(dec)));
+
+    const init = await s.request('initialize', { protocolVersion: '2025-06-18' });
+    check('Instruktionen: immer Link', /IMMER ein Link/.test(init.result.instructions));
+    await s.stop();
+});
+
+await test('Skills: Ausgabe-Regeln und Skriptpfad je Ziel', () => {
+    const skill = readFileSync(join(ROOT, 'plugin', 'skills', 'protokoll-ueberarbeiten', 'SKILL.md'), 'utf8');
+    check('Link-Regel enthalten', /Ergebnis immer als Link/.test(skill) && /Kein JSON-Codeblock/.test(skill));
+    check('Plugin: Skriptpfad über CLAUDE_SKILL_DIR', skill.includes('python ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py link'));
+    check('Plugin: Link-Tools ohne Rückfrage', /^allowed-tools: .*protokoll_link/m.test(skill));
+    check('kein Platzhalter übrig', !skill.includes('{{SCRIPT}}'));
+    check('Link-Trigger in der Beschreibung', /^description: .*#import=/m.test(skill));
+    check('Beschreibung ≤ 1024 Zeichen', skill.match(/^description: (.*)$/m)[1].length <= 1024);
 });
 
 /* ── PDF (nur mit laufendem Generator, siehe run.sh) ─────── */
