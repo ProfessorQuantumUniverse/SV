@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-    validate, makeLink, decodeLink, normalise, encodePayload
+    validate, makeLink, decodeLink, normalise, encodePayload, preview, diff
 } from '../plugin/mcp/lib/protokoll.mjs';
 import { findBrowser } from '../plugin/mcp/lib/pdf.mjs';
 
@@ -57,6 +57,7 @@ const CASES = {
     'Zeiten & Daten': { ...clone(example), printDate: '2026-01-01', timeFrom: '15:00', timeTo: '14:00' },
     'doppelte Titel': { ...clone(example), sections: [{ title: 'SV-Raum', text: 'a' }, { title: 'sv-raum', text: 'b' }, { title: 'x'.repeat(45), text: '' }] },
     'leere Tabelle': { ...clone(example), sections: [{ title: 'A', text: 'b', votes: { caption: '', rows: [] } }] },
+    'doppelte IDs': { ...clone(example), sections: [{ id: 'a', title: 'X', text: 'x' }, { id: 'a', title: 'Y', text: 'y' }] },
     'kein Objekt': ['nope']
 };
 
@@ -144,6 +145,57 @@ if (!PY) {
         });
     });
 
+    await test('preview und diff sind in Python und JS zeichengleich', () => {
+        const withVotes = {
+            ...clone(example), location: '', timeFrom: '', timeTo: '14:00', author: '',
+            attendance: { '10B': 'Lisa' },
+            sections: [
+                { id: 'a', title: 'Wahl', text: 'Absatz eins.  \nZeile.\n\n\n  \n\nAbsatz zwei.', votes: { caption: 'Wahl der Delegierten', rows: [{ label: 'Anna', yes: '7', no: 2, abstain: '' }, { label: '', yes: '', no: '', abstain: '' }, { label: 'Ben', yes: 3, no: 3, abstain: 1 }] } },
+                { title: '', text: 'Ohne Titel.' },
+                { title: '   ', text: '  ', votes: null }
+            ]
+        };
+        const docs = { beispiel: example, abstimmung: withVotes, minimal: CASES.minimal, 'falsches Datum': CASES['falsches Datum'] };
+        Object.entries(docs).forEach(([name, data]) => {
+            const file = join(TMP, 'p.json');
+            writeFileSync(file, JSON.stringify(data));
+            const r = py(['preview', file]);
+            check(`preview ${name}`, r.stdout.replace(/\r\n/g, '\n').trimEnd() === preview(data),
+                `py:\n${r.stdout}\n      js:\n${preview(data)}\n${r.stderr}`);
+        });
+        check('Vorschau zeigt Abstimmungsergebnis', /Anna: Ja 7 · Nein 2 · Enth\. – → Angenommen/.test(preview(withVotes)), preview(withVotes));
+        check('Vorschau überspringt leere Punkte', !/▌ \(ohne Titel\)\n$/.test(preview(withVotes)) && (preview(withVotes).match(/▌/g) || []).length === 2);
+
+        const alt = { ...clone(example), sections: example.sections.map((x, i) => ({ id: `s${i}`, ...x })) };
+        const neu = clone(alt);
+        neu.author = 'Anna';
+        neu.attendance['7A'] = 'Max';
+        neu.sections[0].text = 'Frau Löwe hat zugesagt.';
+        neu.sections[3].title = 'Website';
+        neu.sections[4].votes = { caption: '', rows: [{ label: 'Bowling', yes: 5, no: 1, abstain: 0 }] };
+        neu.sections.splice(1, 1);
+        neu.sections.push({ title: 'Sonstiges', text: 'Nichts.' });
+        const pairs = { 'alles geändert': [alt, neu], 'nichts geändert': [alt, alt], 'leer → voll': [CASES.minimal, example] };
+        Object.entries(pairs).forEach(([name, [a, b]]) => {
+            const fa = join(TMP, 'a.json');
+            const fb = join(TMP, 'b.json');
+            writeFileSync(fa, JSON.stringify(a));
+            writeFileSync(fb, JSON.stringify(b));
+            const r = py(['diff', fa, fb]);
+            check(`diff ${name}`, r.stdout.replace(/\r\n/g, '\n').trimEnd() === diff(a, b),
+                `py:\n${r.stdout}\n      js:\n${diff(a, b)}\n${r.stderr}`);
+        });
+        const d = diff(alt, neu);
+        ['Protokollant*in: „Lorenzo Bay-Müller“ → „Anna“', '7A: – → „Max“', '~ Verbindungslehrer (44 → 5 Wörter)',
+            '[Titel: „Schulwebsite“ → „Website“]', 'SV-Aktion (30 → 30 Wörter) [Abstimmung geändert]',
+            '+ Sonstiges (neu, 2 Wörter)', '− Schulplenum (entfernt, 22 Wörter)', 'Gesamt: 177 → 118 Wörter (-33 %)']
+            .forEach(line => check(`diff enthält „${line}“`, d.includes(line), d));
+        check('diff ohne Änderung', /^Punkte:/.test(diff(alt, alt)) && /\(\+?0 %\)$/.test(diff(alt, alt)), diff(alt, alt));
+
+        const stats = py(['stats', makeLink(example)]);
+        check('stats liest Links und summiert', /Summe\s+177/.test(stats.stdout), stats.stdout + stats.stderr);
+    });
+
     await test('Python-Links und JS-Links sind austauschbar', () => {
         const file = join(TMP, 'beispiel.json');
         writeFileSync(file, JSON.stringify(example));
@@ -212,7 +264,7 @@ await test('MCP: Handshake, Tools, Prompts, Ressourcen', async () => {
     s.notify('notifications/initialized');
 
     const tools = (await s.request('tools/list')).result.tools.map(t => t.name);
-    check('sechs Tools', tools.length === 6 && tools.includes('protokoll_render_pdf'), tools.join(', '));
+    check('acht Tools', tools.length === 8 && ['protokoll_render_pdf', 'protokoll_diff', 'protokoll_preview'].every(t => tools.includes(t)), tools.join(', '));
 
     const fmt = text(await s.request('tools/call', { name: 'protokoll_format', arguments: {} }));
     check('Format enthält Stilleitfaden und Schema', /Stilleitfaden/.test(fmt) && /"\$defs"/.test(fmt));

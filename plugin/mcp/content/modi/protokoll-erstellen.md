@@ -22,6 +22,8 @@ SV-Protokoll für den SV-Protokoll-Generator – ausgeliefert als Link.
    Zusammengehöriges zu einem Punkt bündeln, auch wenn es verstreut besprochen wurde.
 4. **Pro Punkt** nach Stilleitfaden schreiben: Stand → Verlauf → Ergebnis → nächste
    Schritte. Nur was im Material steht.
+   Abkürzungen und Begriffe aus den Notizen (z. B. „FS“, „SSR“) nach dem Glossar
+   auflösen bzw. schreiben; was dort nicht steht, nachfragen.
 5. **Abstimmungen** erkennen („wer ist dafür … 12, dagegen 3“) → `votes`-Tabelle.
    Ohne Zahlen keine Tabelle.
 6. **Lücken:** Fehlt etwas Wesentliches (Datum, Anwesenheit, Protokollant*in), trotzdem

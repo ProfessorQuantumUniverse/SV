@@ -8,13 +8,17 @@ Python 3.8+, nur Standardbibliothek. Gegenstück zu plugin/mcp/lib/protokoll.mjs
   python sv_protokoll.py link protokoll.json       # Markdown-Link, der das Protokoll im Generator öffnet
                                                    # (--raw: nur die URL)
   python sv_protokoll.py decode "<link>"           # Link -> JSON
+  python sv_protokoll.py preview protokoll.json    # Klartext, wie das Protokoll gerendert aussieht
+  python sv_protokoll.py stats protokoll.json      # Wörter je Punkt und gesamt
+  python sv_protokoll.py diff alt.json neu.json    # Punkte vorher/nachher inkl. Wortzahl
   python sv_protokoll.py normalise protokoll.json  # in Export-Form bringen (stdout)
 
-Statt eines Dateinamens liest "-" von stdin.
+Statt eines Dateinamens geht auch "-" (stdin) oder direkt ein Link (…#import=…).
 """
 
 import base64
 import json
+import math
 import os
 import re
 import sys
@@ -201,10 +205,17 @@ def lint(data):
     if not sections:
         add("no-sections", "sections", "Das Protokoll hat keine Punkte.")
     seen = {}
+    ids = {}
     for i, sec in enumerate(sections):
         if not isinstance(sec, dict):
             continue
         p = "sections[%d]" % i
+        if isinstance(sec.get("id"), str) and sec["id"]:
+            if sec["id"] in ids:
+                add("duplicate-id", p + ".id",
+                    "ID doppelt (wie sections[%d]) – beim Zusammenlegen nur eine behalten." % ids[sec["id"]])
+            else:
+                ids[sec["id"]] = i
         title = sec["title"].strip() if isinstance(sec.get("title"), str) else ""
         text = sec["text"] if isinstance(sec.get("text"), str) else ""
         votes = sec.get("votes")
@@ -249,6 +260,218 @@ def validate(data):
     errors = []
     check(root, data, "", root, errors)
     return {"valid": not errors, "errors": errors, "warnings": lint(data)}
+
+
+# ── Klartext-Vorschau, Diff, Statistik (wie protokoll.mjs) ────────────
+
+ALL_CLASSES = ["7A", "7B", "8A", "8B", "9A", "9B", "10A", "10B", "11A", "11B", "12A", "12B", "13A", "13B"]
+
+
+def s_(v):
+    return "" if v is None else (json.dumps(v) if isinstance(v, bool) else str(v))
+
+
+def word_count(text):
+    return len(re.findall(r"\S+", s_(text)))
+
+
+def section_words(sec):
+    return word_count("%s %s" % (s_(sec.get("title")), s_(sec.get("text"))))
+
+
+def section_list(data):
+    secs = data.get("sections")
+    return [x for x in secs if isinstance(x, dict)] if isinstance(secs, list) else []
+
+
+def count_names(v):
+    return len([x for x in s_(v).split(",") if x.strip()])
+
+
+def format_date(value):
+    m = re.match(r"^(\d{4})-(\d{1,2})-(\d{1,2})\Z", s_(value), re.ASCII)
+    return "%d.%d.%s" % (int(m.group(3)), int(m.group(2)), m.group(1)) if m else "…"
+
+
+def subtitle(data):
+    bits = []
+    if s_(data.get("location")).strip():
+        bits.append(s_(data.get("location")).strip())
+    frm = s_(data.get("timeFrom")).replace(":", ".", 1)
+    to = s_(data.get("timeTo")).replace(":", ".", 1)
+    if frm and to:
+        bits.append("%s – %s Uhr" % (frm, to))
+    elif frm:
+        bits.append("ab %s Uhr" % frm)
+    elif to:
+        bits.append("bis %s Uhr" % to)
+    return " · ".join(bits)
+
+
+def to_num(v):
+    if v is None or v == "":
+        return None
+    try:
+        n = float(v)
+    except (TypeError, ValueError):
+        return None
+    if n != n or n in (float("inf"), float("-inf")):
+        return None
+    return int(n) if n.is_integer() else n
+
+
+def vote_result(row):
+    y, n, a = (to_num(row.get(k)) for k in ("yes", "no", "abstain"))
+    if y is None and n is None and a is None:
+        return "–"
+    if (y or 0) > (n or 0):
+        return "Angenommen"
+    if (y or 0) < (n or 0):
+        return "Abgelehnt"
+    return "Unentschieden"
+
+
+def vote_rows(sec):
+    v = sec.get("votes")
+    rows = v.get("rows") if isinstance(v, dict) else None
+    return [r for r in rows if isinstance(r, dict)] if isinstance(rows, list) else []
+
+
+def has_content(sec):
+    return bool(s_(sec.get("title")).strip() or s_(sec.get("text")).strip() or vote_rows(sec))
+
+
+def preview(data):
+    out = ["SV-Protokoll – " + format_date(data.get("meetingDate"))]
+    sub = subtitle(data)
+    if sub:
+        out.append(sub)
+
+    att = data.get("attendance") if isinstance(data.get("attendance"), dict) else {}
+    present = [c for c in ALL_CLASSES if count_names(att.get(c)) > 0]
+    people = sum(count_names(att.get(c)) for c in present)
+    out.append("")
+    if people:
+        out.append("Anwesend: %d %s aus %d %s" % (people, "Person" if people == 1 else "Personen",
+                                                   len(present), "Klasse" if len(present) == 1 else "Klassen"))
+    else:
+        out.append("Anwesend: –")
+    for c in present:
+        out.append("  %s: %s" % (c, s_(att.get(c)).strip()))
+
+    sections = [x for x in section_list(data) if has_content(x)]
+    topics = [s_(x.get("title")).strip() for x in sections if s_(x.get("title")).strip()]
+    if topics:
+        out += ["", "Themen: " + ", ".join(topics)]
+
+    out += ["", "Protokoll:"]
+    for sec in sections:
+        out += ["", "▌ " + (s_(sec.get("title")).strip() or "(ohne Titel)")]
+        paras = [p.rstrip() for p in re.split(r"\n{2,}", s_(sec.get("text")))]
+        for i, p in enumerate(x for x in paras if x.strip()):
+            if i:
+                out.append("")
+            out.append(p)
+        rows = vote_rows(sec)
+        if rows:
+            caption = s_(sec["votes"].get("caption")).strip()
+            out.append("  Abstimmung" + (": " + caption if caption else ""))
+            for r in rows:
+                def cell(v):
+                    n = to_num(v)
+                    return "–" if n is None else str(n)
+                out.append("  – %s: Ja %s · Nein %s · Enth. %s → %s" % (
+                    s_(r.get("label")).strip() or "–", cell(r.get("yes")), cell(r.get("no")),
+                    cell(r.get("abstain")), vote_result(r)))
+    out += ["", "Erstellt von %s, %s" % (s_(data.get("author")).strip() or "…", format_date(data.get("printDate")))]
+    return "\n".join(out)
+
+
+EC_FIELDS = [("meetingDate", "Sitzungsdatum"), ("printDate", "Erstellt am"), ("author", "Protokollant*in"),
+             ("location", "Ort"), ("timeFrom", "Beginn"), ("timeTo", "Ende")]
+
+
+def vote_key(sec):
+    rows = vote_rows(sec)
+    if not rows:
+        return ""
+    return dumps([s_(sec["votes"].get("caption")),
+                  [[s_(r.get("label")), s_(r.get("yes")), s_(r.get("no")), s_(r.get("abstain"))] for r in rows]])
+
+
+def quote(v):
+    return "„%s“" % s_(v).strip() if s_(v).strip() else "–"
+
+
+def diff(before, after):
+    out = []
+    changes = ["  %s: %s → %s" % (label, quote(before.get(k)), quote(after.get(k)))
+               for k, label in EC_FIELDS if s_(before.get(k)).strip() != s_(after.get(k)).strip()]
+    if changes:
+        out += ["Eckdaten:"] + changes
+    att_a = before.get("attendance") or {}
+    att_b = after.get("attendance") or {}
+    att_changes = ["  %s: %s → %s" % (c, quote(att_a.get(c)), quote(att_b.get(c)))
+                   for c in ALL_CLASSES if s_(att_a.get(c)).strip() != s_(att_b.get(c)).strip()]
+    if att_changes:
+        out += ["Anwesenheit:"] + att_changes
+
+    olds = section_list(before)
+    used = set()
+
+    def title(sec):
+        return s_(sec.get("title")).strip() or "(ohne Titel)"
+
+    def find_old(sec):
+        if sec.get("id") is not None and sec.get("id") != "":
+            for k, o in enumerate(olds):
+                if k not in used and o.get("id") is not None and s_(o.get("id")) == s_(sec.get("id")):
+                    return k
+        t = s_(sec.get("title")).strip().lower()
+        if t:
+            for k, o in enumerate(olds):
+                if k not in used and s_(o.get("title")).strip().lower() == t:
+                    return k
+        return -1
+
+    out.append("Punkte:")
+    for sec in section_list(after):
+        i = find_old(sec)
+        if i < 0:
+            out.append("  + %s (neu, %d Wörter)" % (title(sec), section_words(sec)))
+            continue
+        used.add(i)
+        old = olds[i]
+        notes = []
+        if s_(old.get("title")).strip() != s_(sec.get("title")).strip():
+            notes.append("Titel: %s → %s" % (quote(old.get("title")), quote(sec.get("title"))))
+        if vote_key(old) != vote_key(sec):
+            notes.append("Abstimmung geändert")
+        if not notes and s_(old.get("text")) == s_(sec.get("text")):
+            out.append("  = %s (unverändert, %d Wörter)" % (title(sec), section_words(sec)))
+        else:
+            out.append("  ~ %s (%d → %d Wörter)%s" % (title(sec), section_words(old), section_words(sec),
+                                                      " [%s]" % "; ".join(notes) if notes else ""))
+    for k, old in enumerate(olds):
+        if k not in used:
+            out.append("  − %s (entfernt, %d Wörter)" % (title(old), section_words(old)))
+
+    a = sum(section_words(x) for x in olds)
+    b = sum(section_words(x) for x in section_list(after))
+    total = "Gesamt: %d → %d Wörter" % (a, b)
+    if a:
+        pct = int(math.floor((b - a) / a * 100 + 0.5))
+        total += " (%s%d %%)" % ("+" if pct > 0 else "", pct)
+    out.append(total)
+    return "\n".join(out)
+
+
+def stats_text(data):
+    secs = section_list(data)
+    width = max([len(s_(x.get("title")).strip() or "(ohne Titel)") for x in secs] + [5])
+    lines = ["%-*s  %5d" % (width, s_(x.get("title")).strip() or "(ohne Titel)", section_words(x)) for x in secs]
+    lines.append("%-*s  %5d" % (width, "Summe", sum(section_words(x) for x in secs)))
+    return "\n".join(lines)
 
 
 # ── Normalisieren & Links ─────────────────────────────────────────────
@@ -325,14 +548,20 @@ def extract_payload(link):
 # ── CLI ───────────────────────────────────────────────────────────────
 
 def read_json(src):
+    """Datei, "-" (stdin) oder direkt ein Link (…#import=…)."""
+    if re.search(r"[#&]%s=" % LINK_PARAM, src):
+        return decode_payload(extract_payload(src))
     text = sys.stdin.read() if src == "-" else open(src, encoding="utf-8-sig").read()
     return json.loads(text)
+
+
+COMMANDS = ("validate", "link", "decode", "normalise", "preview", "stats", "diff")
 
 
 def main(argv):
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
-    if len(argv) < 2 or argv[0] not in ("validate", "link", "decode", "normalise"):
+    if len(argv) < 2 or argv[0] not in COMMANDS or (argv[0] == "diff" and len(argv) < 3):
         print(__doc__.strip())
         return 2
     cmd, arg = argv[0], argv[1]
@@ -340,8 +569,18 @@ def main(argv):
     if cmd == "decode":
         print(json.dumps(decode_payload(extract_payload(arg)), ensure_ascii=False, indent=2))
         return 0
+    if cmd == "diff":
+        print(diff(read_json(arg), read_json(argv[2])))
+        return 0
 
     data = read_json(arg)
+    if cmd == "preview":
+        print(preview(data))
+        return 0
+    if cmd == "stats":
+        print(stats_text(data))
+        return 0
+    result = validate(data)
     result = validate(data)
     if cmd == "validate":
         if "--json" in argv:

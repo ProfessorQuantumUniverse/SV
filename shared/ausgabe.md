@@ -16,6 +16,16 @@ wenn ausdrücklich danach gefragt wird.
 
 Auf Wunsch zusätzlich: JSON-Datei (`protokoll_save_json`), PDF (`protokoll_render_pdf`).
 
+## Helfer vor dem Ausliefern
+- **Bericht bei bestehenden Protokollen:** `protokoll_diff` bzw.
+  `python {{SCRIPT}} diff <alt> <neu>` – zeigt Punkte neu/geändert/entfernt und die
+  Wortzahl vorher → nachher. Die Zahlen daraus im Bericht nennen.
+- **Gegenlesen:** `protokoll_preview` bzw. `python {{SCRIPT}} preview <datei>` zeigt das
+  Protokoll als Klartext so, wie es gerendert wird.
+- **Länge:** `python {{SCRIPT}} stats <datei>` (Wörter je Punkt); über MCP steht das in
+  `protokoll_validate`.
+- Statt einer Datei nehmen alle Befehle und Tools auch direkt einen Link.
+
 ## Eingabe lesen
 - **Link** (`…/SV/#import=…`, z. B. aus „Link kopieren“): `protokoll_decode_link` bzw.
   `python {{SCRIPT}} decode "<link>"`.
@@ -23,6 +33,7 @@ Auf Wunsch zusätzlich: JSON-Datei (`protokoll_save_json`), PDF (`protokoll_rend
 - PDF/Screenshot eines alten Protokolls: Inhalt abtippen und ins Format überführen.
 
 ## Nachschlagen
-Datenformat und Stilleitfaden bei Bedarf lesen, nicht raten: Tool `protokoll_format`
-oder `references/format.md`, `references/stil.md`, `references/beispiel.json`,
+Datenformat, Stilleitfaden und **Glossar** (feste Begriffe wie „SV-Aktion“, „SSR“) bei
+Bedarf lesen, nicht raten: Tool `protokoll_format` oder `references/format.md`,
+`references/stil.md`, `references/glossar.md`, `references/beispiel.json`,
 `references/schema.json` im Ordner dieses Skills.

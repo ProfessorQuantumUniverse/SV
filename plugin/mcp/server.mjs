@@ -16,7 +16,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, isAbsolute, join, parse, resolve } from 'node:path';
 import {
-    DEFAULT_APP_URL, readContent, validate, normalise, makeLink, decodeLink
+    DEFAULT_APP_URL, readContent, validate, normalise, makeLink, decodeLink, preview, diff
 } from './lib/protokoll.mjs';
 import { renderPdf } from './lib/pdf.mjs';
 
@@ -105,6 +105,10 @@ function summary(s) {
         `${s.voteTables} Abstimmungstabelle(n), ${s.words} Wörter` + (s.openQuestions ? `, ${s.openQuestions}× [?]` : '');
 }
 
+function wordsPerSection(s) {
+    return 'Wörter je Punkt: ' + (s.wordsPerSection.map(x => `${x.title || '(ohne Titel)'} ${x.words}`).join(' · ') || '–');
+}
+
 /* ── TOOLS ───────────────────────────────────────────────── */
 
 const PROTOKOLL_ARG = {
@@ -115,13 +119,14 @@ const TOOLS = [
     {
         name: 'protokoll_format',
         title: 'Format & Stilleitfaden',
-        description: 'Liefert Datenformat, Darstellungsregeln, Stilleitfaden, JSON-Schema und ein vollständiges Beispiel für SV-Protokolle. Vor dem Erstellen oder Bearbeiten eines Protokolls einmal aufrufen.',
+        description: 'Liefert Datenformat, Darstellungsregeln, Stilleitfaden, Glossar fester Begriffe, JSON-Schema und ein vollständiges Beispiel für SV-Protokolle. Vor dem Erstellen oder Bearbeiten eines Protokolls einmal aufrufen.',
         inputSchema: { type: 'object', properties: {} },
         annotations: { readOnlyHint: true, openWorldHint: false },
         run() {
             return [
                 readContent('format.md'),
                 readContent('stil.md'),
+                readContent('glossar.md'),
                 '# JSON-Schema\n```json\n' + readContent('schema.json').trim() + '\n```',
                 '# Beispiel\n```json\n' + readContent('beispiel.json').trim() + '\n```'
             ].join('\n\n---\n\n');
@@ -137,7 +142,8 @@ const TOOLS = [
             const result = validate(parseProtokoll(protokoll));
             const head = result.valid ? '✓ Gültig.' : '✗ Ungültig.';
             return {
-                text: [head, result.stats ? summary(result.stats) : '', formatIssues(result)].filter(Boolean).join('\n'),
+                text: [head, result.stats ? summary(result.stats) : '', result.stats ? wordsPerSection(result.stats) : '',
+                    formatIssues(result)].filter(Boolean).join('\n'),
                 structured: result
             };
         }
@@ -187,6 +193,33 @@ const TOOLS = [
                     '\n\nNach der Bearbeitung mit protokoll_link wieder als Link zurückgeben.',
                 structured: { protokoll: data }
             };
+        }
+    },
+    {
+        name: 'protokoll_diff',
+        title: 'Änderungen zeigen',
+        description: 'Vergleicht altes und neues Protokoll: geänderte Eckdaten und Anwesenheit, Punkte neu/geändert/entfernt/unverändert mit Wortzahl vorher → nachher und Gesamtbilanz. Grundlage für den Bericht nach Korrektur oder Überarbeitung.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                alt: { description: 'Ursprüngliches Protokoll (JSON-Objekt oder Link).' },
+                neu: { description: 'Bearbeitetes Protokoll (JSON-Objekt oder Link).' }
+            },
+            required: ['alt', 'neu']
+        },
+        annotations: { readOnlyHint: true, openWorldHint: false },
+        run({ alt, neu }) {
+            return diff(parseProtokoll(alt), parseProtokoll(neu));
+        }
+    },
+    {
+        name: 'protokoll_preview',
+        title: 'Klartext-Vorschau',
+        description: 'Zeigt das Protokoll als Klartext so, wie der Generator es darstellt (Titel, Anwesenheit, Themen, Punkte, Abstimmungsergebnisse, Fußzeile) – zum Gegenlesen ohne Browser.',
+        inputSchema: { type: 'object', properties: { protokoll: PROTOKOLL_ARG }, required: ['protokoll'] },
+        annotations: { readOnlyHint: true, openWorldHint: false },
+        run({ protokoll }) {
+            return preview(parseProtokoll(protokoll));
         }
     },
     {
@@ -290,6 +323,7 @@ const RESOURCES = [
     { uri: 'sv-protokoll://schema', name: 'schema', title: 'JSON-Schema', file: 'schema.json', mimeType: 'application/schema+json' },
     { uri: 'sv-protokoll://format', name: 'format', title: 'Datenformat & Darstellung', file: 'format.md', mimeType: 'text/markdown' },
     { uri: 'sv-protokoll://stil', name: 'stil', title: 'Stilleitfaden', file: 'stil.md', mimeType: 'text/markdown' },
+    { uri: 'sv-protokoll://glossar', name: 'glossar', title: 'Glossar', file: 'glossar.md', mimeType: 'text/markdown' },
     { uri: 'sv-protokoll://beispiel', name: 'beispiel', title: 'Beispielprotokoll', file: 'beispiel.json', mimeType: 'application/json' }
 ];
 

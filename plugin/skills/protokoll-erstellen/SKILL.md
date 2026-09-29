@@ -2,7 +2,7 @@
 name: protokoll-erstellen
 description: Erstellt ein neues SV-Protokoll (Schülervertretung FWS Frankfurt) im Format des SV-Protokoll-Generators aus Notizen, Stichpunkten, Chatverläufen oder dem Transkript einer Audioaufnahme. Verwenden, wenn ein Sitzungsprotokoll neu geschrieben, aus Mitschrift/Notizen/Transkript erstellt oder "from scratch" aufgesetzt werden soll. Ergebnis ist immer ein Link, der das Protokoll im Generator öffnet.
 argument-hint: "[Notizen, Transkript oder Dateipfad]"
-allowed-tools: mcp__plugin_sv-protokoll_sv-protokoll__protokoll_format mcp__plugin_sv-protokoll_sv-protokoll__protokoll_validate mcp__plugin_sv-protokoll_sv-protokoll__protokoll_link mcp__plugin_sv-protokoll_sv-protokoll__protokoll_decode_link Bash(python ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py *) Bash(py ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py *)
+allowed-tools: mcp__plugin_sv-protokoll_sv-protokoll__protokoll_format mcp__plugin_sv-protokoll_sv-protokoll__protokoll_validate mcp__plugin_sv-protokoll_sv-protokoll__protokoll_link mcp__plugin_sv-protokoll_sv-protokoll__protokoll_decode_link mcp__plugin_sv-protokoll_sv-protokoll__protokoll_diff mcp__plugin_sv-protokoll_sv-protokoll__protokoll_preview Bash(python ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py *) Bash(py ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py *)
 ---
 <!-- Generiert aus shared/modi/protokoll-erstellen.md und shared/ausgabe.md – dort bearbeiten, dann `npm run build`. -->
 
@@ -24,6 +24,8 @@ SV-Protokoll für den SV-Protokoll-Generator – ausgeliefert als Link.
    Zusammengehöriges zu einem Punkt bündeln, auch wenn es verstreut besprochen wurde.
 4. **Pro Punkt** nach Stilleitfaden schreiben: Stand → Verlauf → Ergebnis → nächste
    Schritte. Nur was im Material steht.
+   Abkürzungen und Begriffe aus den Notizen (z. B. „FS“, „SSR“) nach dem Glossar
+   auflösen bzw. schreiben; was dort nicht steht, nachfragen.
 5. **Abstimmungen** erkennen („wer ist dafür … 12, dagegen 3“) → `votes`-Tabelle.
    Ohne Zahlen keine Tabelle.
 6. **Lücken:** Fehlt etwas Wesentliches (Datum, Anwesenheit, Protokollant*in), trotzdem
@@ -54,6 +56,16 @@ wenn ausdrücklich danach gefragt wird.
 
 Auf Wunsch zusätzlich: JSON-Datei (`protokoll_save_json`), PDF (`protokoll_render_pdf`).
 
+## Helfer vor dem Ausliefern
+- **Bericht bei bestehenden Protokollen:** `protokoll_diff` bzw.
+  `python ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py diff <alt> <neu>` – zeigt Punkte neu/geändert/entfernt und die
+  Wortzahl vorher → nachher. Die Zahlen daraus im Bericht nennen.
+- **Gegenlesen:** `protokoll_preview` bzw. `python ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py preview <datei>` zeigt das
+  Protokoll als Klartext so, wie es gerendert wird.
+- **Länge:** `python ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py stats <datei>` (Wörter je Punkt); über MCP steht das in
+  `protokoll_validate`.
+- Statt einer Datei nehmen alle Befehle und Tools auch direkt einen Link.
+
 ## Eingabe lesen
 - **Link** (`…/SV/#import=…`, z. B. aus „Link kopieren“): `protokoll_decode_link` bzw.
   `python ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py decode "<link>"`.
@@ -61,6 +73,7 @@ Auf Wunsch zusätzlich: JSON-Datei (`protokoll_save_json`), PDF (`protokoll_rend
 - PDF/Screenshot eines alten Protokolls: Inhalt abtippen und ins Format überführen.
 
 ## Nachschlagen
-Datenformat und Stilleitfaden bei Bedarf lesen, nicht raten: Tool `protokoll_format`
-oder `references/format.md`, `references/stil.md`, `references/beispiel.json`,
+Datenformat, Stilleitfaden und **Glossar** (feste Begriffe wie „SV-Aktion“, „SSR“) bei
+Bedarf lesen, nicht raten: Tool `protokoll_format` oder `references/format.md`,
+`references/stil.md`, `references/glossar.md`, `references/beispiel.json`,
 `references/schema.json` im Ordner dieses Skills.

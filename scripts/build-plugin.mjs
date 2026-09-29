@@ -52,7 +52,7 @@ const TARGETS = {
 
 const MCP = 'mcp__plugin_sv-protokoll_sv-protokoll__';
 const ALLOWED_TOOLS = [
-    ...['protokoll_format', 'protokoll_validate', 'protokoll_link', 'protokoll_decode_link'].map(t => MCP + t),
+    ...['protokoll_format', 'protokoll_validate', 'protokoll_link', 'protokoll_decode_link', 'protokoll_diff', 'protokoll_preview'].map(t => MCP + t),
     ...['python', 'python3', 'py'].map(py => `Bash(${py} \${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py *)`)
 ].join(' ');
 
@@ -68,6 +68,7 @@ function skillMarkdown(mode, target) {
 const REFERENCES = {
     'format.md': 'shared/format.md',
     'stil.md': 'shared/stil.md',
+    'glossar.md': 'shared/glossar.md',
     'beispiel.json': 'shared/beispiel.json',
     'schema.json': 'schema/protokoll.schema.json'
 };
@@ -205,6 +206,8 @@ if (BUILD_DIST) {
             { name: 'protokoll_validate', description: 'Protokoll prüfen' },
             { name: 'protokoll_link', description: 'Link erzeugen, der das Protokoll im Generator öffnet' },
             { name: 'protokoll_decode_link', description: 'Link aus „Link kopieren“ lesen' },
+            { name: 'protokoll_diff', description: 'Änderungen alt → neu mit Wortzahl' },
+            { name: 'protokoll_preview', description: 'Klartext-Vorschau des gerenderten Protokolls' },
             { name: 'protokoll_save_json', description: 'Als JSON-Datei speichern' },
             { name: 'protokoll_render_pdf', description: 'PDF mit lokalem Chrome/Edge erzeugen' }
         ],

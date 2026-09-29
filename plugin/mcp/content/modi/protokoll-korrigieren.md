@@ -22,6 +22,12 @@ klingen wie vorher**. Wer es geschrieben hat, soll seinen Text wiedererkennen.
 - Stil und Wortwahl – auch wenn es „schöner“ ginge. Kein Umformulieren ganzer Sätze,
   außer ein Satz ist grammatisch kaputt; dann so nah wie möglich am Original reparieren.
 - Abstimmungszahlen, auch wenn sie unplausibel wirken (→ nur im Chat anmerken).
+- Eckdaten: Sitzungsdatum, „Erstellt am“ (`printDate`), Protokollant*in (`author`), Ort,
+  Zeiten – nur Formfehler beheben, sonst unverändert lassen.
+- `id`s der Punkte.
+
+Ausnahme Glossar: Abweichende Schreibweisen fester Begriffe („SV-Action“ → „SV-Aktion“)
+werden vereinheitlicht – das ist eine Korrektur, keine Umformulierung.
 
 ## Bericht
 Zusätzlich zum Link eine kompakte Änderungsliste, gruppiert nach Punkt:

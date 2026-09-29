@@ -2,7 +2,7 @@
 name: protokoll-korrigieren
 description: Korrigiert ein bestehendes SV-Protokoll (Schülervertretung FWS Frankfurt, SV-Protokoll-Generator) behutsam - nur Rechtschreibung, Grammatik, Zeichensetzung, Tippfehler und Formfehler, ohne Inhalt oder Formulierungen zu verändern. Verwenden bei "korrigiere/prüfe/Korrektur lesen/Fehler raus". Auch wenn nur ein Link auf den SV-Protokoll-Generator (professorquantumuniverse.github.io/SV/#import=...) geschickt wird. Ergebnis ist immer ein neuer Link.
 argument-hint: "[Protokoll-JSON, Link oder Dateipfad]"
-allowed-tools: mcp__plugin_sv-protokoll_sv-protokoll__protokoll_format mcp__plugin_sv-protokoll_sv-protokoll__protokoll_validate mcp__plugin_sv-protokoll_sv-protokoll__protokoll_link mcp__plugin_sv-protokoll_sv-protokoll__protokoll_decode_link Bash(python ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py *) Bash(py ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py *)
+allowed-tools: mcp__plugin_sv-protokoll_sv-protokoll__protokoll_format mcp__plugin_sv-protokoll_sv-protokoll__protokoll_validate mcp__plugin_sv-protokoll_sv-protokoll__protokoll_link mcp__plugin_sv-protokoll_sv-protokoll__protokoll_decode_link mcp__plugin_sv-protokoll_sv-protokoll__protokoll_diff mcp__plugin_sv-protokoll_sv-protokoll__protokoll_preview Bash(python ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py *) Bash(py ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py *)
 ---
 <!-- Generiert aus shared/modi/protokoll-korrigieren.md und shared/ausgabe.md – dort bearbeiten, dann `npm run build`. -->
 
@@ -24,6 +24,12 @@ klingen wie vorher**. Wer es geschrieben hat, soll seinen Text wiedererkennen.
 - Stil und Wortwahl – auch wenn es „schöner“ ginge. Kein Umformulieren ganzer Sätze,
   außer ein Satz ist grammatisch kaputt; dann so nah wie möglich am Original reparieren.
 - Abstimmungszahlen, auch wenn sie unplausibel wirken (→ nur im Chat anmerken).
+- Eckdaten: Sitzungsdatum, „Erstellt am“ (`printDate`), Protokollant*in (`author`), Ort,
+  Zeiten – nur Formfehler beheben, sonst unverändert lassen.
+- `id`s der Punkte.
+
+Ausnahme Glossar: Abweichende Schreibweisen fester Begriffe („SV-Action“ → „SV-Aktion“)
+werden vereinheitlicht – das ist eine Korrektur, keine Umformulierung.
 
 ## Bericht
 Zusätzlich zum Link eine kompakte Änderungsliste, gruppiert nach Punkt:
@@ -50,6 +56,16 @@ wenn ausdrücklich danach gefragt wird.
 
 Auf Wunsch zusätzlich: JSON-Datei (`protokoll_save_json`), PDF (`protokoll_render_pdf`).
 
+## Helfer vor dem Ausliefern
+- **Bericht bei bestehenden Protokollen:** `protokoll_diff` bzw.
+  `python ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py diff <alt> <neu>` – zeigt Punkte neu/geändert/entfernt und die
+  Wortzahl vorher → nachher. Die Zahlen daraus im Bericht nennen.
+- **Gegenlesen:** `protokoll_preview` bzw. `python ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py preview <datei>` zeigt das
+  Protokoll als Klartext so, wie es gerendert wird.
+- **Länge:** `python ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py stats <datei>` (Wörter je Punkt); über MCP steht das in
+  `protokoll_validate`.
+- Statt einer Datei nehmen alle Befehle und Tools auch direkt einen Link.
+
 ## Eingabe lesen
 - **Link** (`…/SV/#import=…`, z. B. aus „Link kopieren“): `protokoll_decode_link` bzw.
   `python ${CLAUDE_SKILL_DIR}/scripts/sv_protokoll.py decode "<link>"`.
@@ -57,6 +73,7 @@ Auf Wunsch zusätzlich: JSON-Datei (`protokoll_save_json`), PDF (`protokoll_rend
 - PDF/Screenshot eines alten Protokolls: Inhalt abtippen und ins Format überführen.
 
 ## Nachschlagen
-Datenformat und Stilleitfaden bei Bedarf lesen, nicht raten: Tool `protokoll_format`
-oder `references/format.md`, `references/stil.md`, `references/beispiel.json`,
+Datenformat, Stilleitfaden und **Glossar** (feste Begriffe wie „SV-Aktion“, „SSR“) bei
+Bedarf lesen, nicht raten: Tool `protokoll_format` oder `references/format.md`,
+`references/stil.md`, `references/glossar.md`, `references/beispiel.json`,
 `references/schema.json` im Ordner dieses Skills.

@@ -62,8 +62,13 @@ ist eine Alternative für den Chat-Modus, falls du dort nur den MCP-Server ohne 
 | `protokoll_link` | prüft und liefert den Markdown-Link (Standard-Ausgabe) |
 | `protokoll_decode_link` | Link → JSON |
 | `protokoll_format` | Datenformat, Stilleitfaden, Schema, Beispiel |
-| `protokoll_validate` | nur prüfen |
+| `protokoll_validate` | nur prüfen (inkl. Wörter je Punkt) |
+| `protokoll_diff` | alt → neu: Punkte neu/geändert/entfernt, Wortzahl |
+| `protokoll_preview` | Klartext-Vorschau wie gerendert |
 | `protokoll_save_json`, `protokoll_render_pdf` | Datei im Downloads-Ordner (überschreibt nie) |
+
+Ohne MCP bietet das Python-Skript dasselbe: `validate`, `link`, `decode`, `diff`, `preview`,
+`stats`. Jeder Befehl nimmt statt einer Datei auch einen Link.
 
 `protokoll` darf überall auch ein Link sein. Optionale Umgebungsvariablen: `SV_APP_URL`
 (z. B. `http://localhost:8123/`), `SV_OUTPUT_DIR`, `SV_BROWSER` (Pfad zu Chrome/Edge).
@@ -76,6 +81,7 @@ ist eine Alternative für den Chat-Modus, falls du dort nur den MCP-Server ohne 
 | `schema/protokoll.schema.json` | Datenformat (einzige Quelle) |
 | `shared/modi/*.md` | Die drei Skills (Frontmatter = Trigger-Beschreibung) |
 | `shared/ausgabe.md` | Gemeinsame Regeln: Link-Ausgabe, Eingabe lesen |
+| `shared/glossar.md` | Feste Begriffe und Abkürzungen (SV-Aktion, SSR, FS …) – **hier neue Begriffe ergänzen** |
 | `shared/stil.md`, `shared/format.md`, `shared/beispiel.json` | Stilleitfaden, Formatdoku, Beispiel |
 | `shared/sv_protokoll.py` | Python-Ersatz für Prüfung und Link |
 | `plugin/mcp/` | MCP-Server (Node, ohne Abhängigkeiten) |

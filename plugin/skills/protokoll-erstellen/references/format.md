@@ -36,7 +36,9 @@ Leere Werte als `""` angeben (nicht weglassen, nicht `null`).
 - `text`: reiner Text. `\n\n` = neuer Absatz, `\n` = Zeilenumbruch.
   **Kein Markdown, kein HTML** – `**fett**` erscheint wörtlich mit Sternchen.
   Aufzählungen bei Bedarf als Zeilen mit „– “ am Anfang.
-- `id`: optional, der Generator vergibt sie selbst.
+- `id`: optional und nur intern (Editor, Zuordnung bei `diff`) – nie sichtbar.
+  Bestehende IDs unverändert lassen; beim Zusammenlegen die ID des ersten Punkts behalten;
+  neue Punkte ohne `id` (der Generator vergibt eine). IDs nie doppelt vergeben.
 
 ### Abstimmungen (`votes`)
 ```json

@@ -16,7 +16,12 @@ Absätze durch Leerzeile getrennt:
 4. **Nächste Schritte** – Wer macht was bis wann? („Lisa klärt bis zur nächsten
    Sitzung mit Frau Löwe, ob …“)
 
-Ein Punkt hat typischerweise 2–6 Sätze. Nicht jeder Punkt braucht alle vier Teile.
+Ein Punkt hat typischerweise 2–6 Sätze. Nicht jeder Punkt braucht alle vier Teile –
+und wenn ausdrücklich gekürzt werden soll, reicht ein Absatz pro Punkt.
+
+## Begriffe
+Feste Begriffe und Abkürzungen stehen in `glossar.md` und werden immer so geschrieben
+(z. B. „SV-Aktion“, nie „SV-Action“; „Stadtschülerrat (SSR)“).
 
 ## Sprache
 - **Perspektive:** „Wir“ für die SV als Gremium („Wir haben beschlossen …“).

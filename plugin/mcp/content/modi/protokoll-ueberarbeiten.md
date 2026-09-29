@@ -23,18 +23,33 @@ bleiben exakt dieselben.**
    im Text nur noch das Ergebnis nennen.
 6. Rechtschreibung und Formfehler wie bei einer Korrektur gleich mit beheben.
 
+## Wenn gekürzt werden soll
+„Kürzer“ geht dem Aufbau aus dem Stilleitfaden vor. Ziel: spürbar kürzer
+(Richtwert: ein Viertel bis ein Drittel weniger Wörter), ohne dass ein Fakt verloren geht.
+- **Raus:** Füllsätze, Wiederholungen, Höflichkeitsformeln, Begründungen, die nichts zum
+  Ergebnis beitragen. Den Verlauf auf einen Halbsatz verdichten oder ganz streichen, wenn
+  das Ergebnis für sich spricht.
+- **Erlaubt:** Punkte zusammenlegen, ein einziger Absatz pro Punkt statt
+  Stand/Verlauf/Ergebnis, knappe Aufzählungen mit „– “.
+- **Bleibt immer:** Ergebnisse, Beschlüsse, Abstimmungen, Zuständigkeiten (wer macht was),
+  Termine, Namen, Zahlen und ausdrücklich offene Punkte.
+- Im Bericht die Wortzahl vorher → nachher nennen (`diff`).
+
 ## Grenzen
-- Alle Fakten, Namen, Zahlen, Termine und Beschlüsse bleiben erhalten – nichts
-  hinzuerfinden, nichts Inhaltliches weglassen (Ausnahme: sensible Inhalte, siehe
-  Stilleitfaden – dann im Chat melden).
+- Keine Fakten, Namen, Zahlen, Termine oder Beschlüsse hinzuerfinden oder verlieren.
+  Ausnahme: sensible Inhalte (siehe Stilleitfaden), die dann im Chat melden.
 - Fehlt einem Punkt das Ergebnis, nicht eines ausdenken: „Ein Ergebnis steht noch aus.“
   oder `[?]` und im Chat nachfragen.
-- Eckdaten und Anwesenheit nur formal korrigieren.
-- **Kürzen:** Verlauf, Wiederholungen und Nebensächliches straffen – Ergebnisse, Beschlüsse,
-  Zuständigkeiten, Termine und Zahlen bleiben immer stehen.
+- **Eckdaten bleiben unverändert:** Sitzungsdatum, „Erstellt am“ (`printDate`),
+  Protokollant*in (`author`), Ort, Zeiten und Anwesenheit nur formal korrigieren – ändern
+  nur auf ausdrücklichen Wunsch.
 - Inhaltliche Änderungen, die ausdrücklich verlangt werden (Punkt ergänzen, Datum ändern,
   Namen nachtragen), werden übernommen – aber nur mit den genannten Fakten.
+- Begriffe nach dem Glossar vereinheitlichen; Unbekanntes nachfragen statt raten.
+- **IDs:** Beim Zusammenlegen die `id` des ersten Punkts behalten, die der anderen entfallen.
+  Neue Punkte bekommen keine `id`. So kann `diff` alt und neu richtig zuordnen.
 
 ## Bericht
 Zusätzlich zum Link: die 3–6 wichtigsten Änderungen in Stichpunkten
 (z. B. „Punkt ‚Raum‘ und ‚Schlüssel‘ zu ‚SV-Raum‘ zusammengeführt“) und offene Fragen.
+Grundlage ist `diff` zwischen altem und neuem Protokoll (inkl. Wortzahl).
