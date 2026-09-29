@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Starts a static server, runs the layout test suite, shuts the server down.
+# Starts a static server, runs the layout and the Claude-tooling suites, shuts the server down.
 set -e
 cd "$(dirname "$0")/.."
 PORT="${PORT:-8123}"
@@ -17,3 +17,4 @@ while [ "$i" -lt 40 ]; do
 done
 
 BASE_URL="http://localhost:$PORT" node tests/protocol.test.mjs
+BASE_URL="http://localhost:$PORT" node tests/tools.test.mjs

@@ -672,6 +672,118 @@ await test('narrow viewports stay usable and keep A4 geometry', async () => {
     await page.setViewportSize({ width: 1600, height: 1000 });
 });
 
+/* ── share links (#import=…) ──────────────────────────────── */
+
+const { makeLink } = await import('../plugin/mcp/lib/protokoll.mjs');
+
+const LINK_DOC = doc({
+    location: 'SV-Raum',
+    timeFrom: '13:30',
+    timeTo: '14:15',
+    sections: [
+        { title: 'Umlaute & „Zeichen“', text: 'Größe, Maß, Straße – 😀\n\nZweiter Absatz.', votes: null },
+        { title: 'Abstimmung', text: 'Ergebnis siehe Tabelle.', votes: { caption: 'SV-Aktion', rows: [{ label: 'Bowling', yes: 9, no: 2, abstain: 1 }] } }
+    ]
+});
+
+/* Opens a URL in a fresh browser context (empty localStorage). */
+async function openFresh(url, onDialog) {
+    const ctx = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
+    const pg = await ctx.newPage();
+    const errors = [];
+    pg.on('pageerror', e => errors.push(String(e.message)));
+    if (onDialog) pg.on('dialog', onDialog);
+    await pg.goto(url);
+    await pg.waitForFunction(() => window.SV && document.querySelector('.protocol-page'));
+    return { ctx, pg, errors };
+}
+
+const snapshot = pg => pg.evaluate(() => {
+    const s = window.SV.state;
+    return {
+        meetingDate: s.meetingDate, author: s.author, location: s.location, timeTo: s.timeTo,
+        attendance: s.attendance,
+        sections: s.sections.map(x => ({ title: x.title, text: x.text, votes: x.votes })),
+        hash: location.hash,
+        topics: document.querySelector('.topics-list')?.textContent.trim()
+    };
+});
+
+await test('a link from the Claude plugin opens the protocol', async () => {
+    const link = makeLink(LINK_DOC, BASE_URL + '/index.html');
+    const { ctx, pg, errors } = await openFresh(link);
+    const s = await snapshot(pg);
+    check('meeting date loaded', s.meetingDate === '2026-01-27', s.meetingDate);
+    check('unicode text survives', s.sections[0].text === LINK_DOC.sections[0].text, s.sections[0].text);
+    check('vote counts arrive', s.sections[1].votes && s.sections[1].votes.rows[0].yes === '9',
+        JSON.stringify(s.sections[1].votes));
+    check('attendance loaded', s.attendance['7B'] === 'Tina, Isabella, Samara, Clara');
+    check('topics rendered', s.topics === 'Umlaute & „Zeichen“, Abstimmung', s.topics);
+    check('hash is cleared after import', s.hash === '', s.hash);
+    check('imported state is saved', await pg.evaluate(() => /Abstimmung/.test(localStorage.getItem('sv-proto-v5'))));
+    check('no page errors', errors.length === 0, errors.join('; '));
+    await ctx.close();
+});
+
+await test('"Link kopieren" produces a link that restores the same protocol', async () => {
+    await layoutFor(LINK_DOC);
+    const link = await page.evaluate(() => window.SV.shareLink());
+    check('link uses #import=', /#import=[A-Za-z0-9_-]+$/.test(link), link.slice(0, 80));
+    const { ctx, pg } = await openFresh(link);
+    const s = await snapshot(pg);
+    check('sections identical', JSON.stringify(s.sections.map(x => [x.title, x.text])) ===
+        JSON.stringify(LINK_DOC.sections.map(x => [x.title, x.text])));
+    await ctx.close();
+});
+
+await test('an existing draft is only replaced after confirmation', async () => {
+    const link = makeLink(LINK_DOC, BASE_URL + '/index.html');
+    const ctx = await browser.newContext();
+    const pg = await ctx.newPage();
+    await pg.goto(BASE_URL + '/index.html');
+    await pg.waitForFunction(() => window.SV && document.querySelector('.protocol-page'));
+    await pg.evaluate(() => {
+        window.SV.applyData({ meetingDate: '2026-03-03', sections: [{ title: 'Mein Entwurf', text: 'Nicht verlieren!' }] });
+        window.SV.updatePreview();
+    });
+
+    /* 1) declined → draft stays */
+    let asked = 0;
+    const decline = d => { asked++; d.dismiss(); };
+    pg.on('dialog', decline);
+    await pg.goto(link);
+    await pg.waitForFunction(() => window.SV && document.querySelector('.protocol-page'));
+    let s = await snapshot(pg);
+    check('user was asked', asked === 1, `asked ${asked}×`);
+    check('declined: draft kept', s.sections[0].title === 'Mein Entwurf', s.sections[0].title);
+    pg.off('dialog', decline);
+
+    /* 2) accepted via hashchange on the open page → replaced */
+    pg.on('dialog', d => { asked++; d.accept(); });
+    await pg.evaluate(u => { location.hash = u.split('#')[1]; }, link);
+    await pg.waitForFunction(() => window.SV.state.sections[0].title !== 'Mein Entwurf');
+    s = await snapshot(pg);
+    check('accepted: link content loaded', s.sections[0].title === LINK_DOC.sections[0].title);
+    check('editor shows imported title',
+        await pg.evaluate(() => document.querySelector('#sections-list .sec-title-input')?.value) === LINK_DOC.sections[0].title);
+    await ctx.close();
+});
+
+await test('a broken link shows an error and keeps the page working', async () => {
+    let message = '';
+    const { ctx, pg, errors } = await openFresh(BASE_URL + '/index.html#import=AAAA-kaputt',
+        d => { message = d.message(); d.dismiss(); });
+    check('user sees an error', /beschädigt/.test(message), message);
+    check('defaults still render', await pg.evaluate(() => document.querySelectorAll('#pdf-preview-container .protocol-page').length) === 1);
+    check('no page errors', errors.length === 0, errors.join('; '));
+    await ctx.close();
+});
+
+await test('export carries the format marker', async () => {
+    const data = await page.evaluate(() => window.SV.exportData());
+    check('format + version set', data.format === 'sv-protokoll' && data.version === 1, JSON.stringify(data).slice(0, 80));
+});
+
 await test('no uncaught page errors during the whole run', async () => {
     check('clean console', pageErrors.length === 0, pageErrors.join('\n      '));
 });

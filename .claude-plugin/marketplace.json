@@ -1,0 +1,15 @@
+{
+  "name": "sv-fws-ffm",
+  "description": "Werkzeuge der Schülervertretung der FWS Frankfurt",
+  "owner": {
+    "name": "ProfessorQuantumUniverse",
+    "url": "https://github.com/ProfessorQuantumUniverse"
+  },
+  "plugins": [
+    {
+      "name": "sv-protokoll",
+      "source": "./plugin",
+      "description": "SV-Protokolle mit Claude erstellen, korrigieren und überarbeiten"
+    }
+  ]
+}

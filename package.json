@@ -1,12 +1,15 @@
 {
   "name": "sv-protokoll-generator",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Protokollgenerator der Schülervertretung der FWS Frankfurt",
   "private": true,
   "license": "GPL-3.0-or-later",
   "scripts": {
     "start": "http-server -p 8123 -s .",
-    "test": "sh tests/run.sh"
+    "build": "node scripts/build-plugin.mjs",
+    "dist": "node scripts/build-plugin.mjs --dist",
+    "test": "sh tests/run.sh",
+    "test:tools": "node tests/tools.test.mjs"
   },
   "devDependencies": {
     "http-server": "^14.1.1",

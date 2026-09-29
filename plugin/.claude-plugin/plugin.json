@@ -1,0 +1,14 @@
+{
+  "name": "sv-protokoll",
+  "displayName": "SV-Protokoll",
+  "version": "1.0.0",
+  "description": "Formgetreue SV-Protokolle (FWS Frankfurt) mit Claude: erstellen aus Notizen/Transkript, korrigieren, überarbeiten – inkl. Prüfung, Import-Link und PDF.",
+  "author": {
+    "name": "ProfessorQuantumUniverse",
+    "url": "https://github.com/ProfessorQuantumUniverse"
+  },
+  "homepage": "https://professorquantumuniverse.github.io/SV/",
+  "repository": "https://github.com/ProfessorQuantumUniverse/SV",
+  "license": "GPL-3.0-or-later",
+  "keywords": ["protokoll", "schuelervertretung", "sv"]
+}

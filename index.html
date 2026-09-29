@@ -18,7 +18,7 @@
     <div class="editor-sidebar">
         <div class="sidebar-header">
             <h1>SV PROTOKOLL</h1>
-            <div class="version-tag">v4.0</div>
+            <div class="version-tag">v4.1</div>
         </div>
 
         <div class="sidebar-content">
@@ -92,6 +92,12 @@
                 <div class="data-actions">
                     <button type="button" id="btn-export" class="btn-ghost">Export (.json)</button>
                     <button type="button" id="btn-import" class="btn-ghost">Import</button>
+                </div>
+                <div class="data-actions">
+                    <button type="button" id="btn-copy-link" class="btn-ghost" title="Link, der genau dieses Protokoll öffnet – zum Teilen oder für Claude">Link kopieren</button>
+                    <button type="button" id="btn-copy-json" class="btn-ghost" title="Protokoll als JSON in die Zwischenablage – z. B. zum Einfügen in Claude">JSON kopieren</button>
+                </div>
+                <div class="data-actions">
                     <button type="button" id="btn-reset-all" class="btn-ghost btn-ghost-danger">Alles zurücksetzen</button>
                 </div>
                 <input type="file" id="import-file" accept="application/json,.json" hidden>
@@ -128,6 +134,8 @@
             </div>
         </div>
     </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
     <!-- Off-screen probe pages used to measure real layout heights -->
     <div id="measure-host" aria-hidden="true"></div>

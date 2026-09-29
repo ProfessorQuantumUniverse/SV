@@ -1,0 +1,45 @@
+{
+  "format": "sv-protokoll",
+  "version": 1,
+  "meetingDate": "2026-01-27",
+  "printDate": "2026-02-01",
+  "author": "Lorenzo Bay-Müller",
+  "location": "SV-Raum",
+  "timeFrom": "13:30",
+  "timeTo": "14:15",
+  "attendance": {
+    "7B": "Tina, Isabella, Samara, Clara",
+    "9A": "Fabiano, Lillian",
+    "9B": "Lorenzo, Bahrian, Annika, Aaron",
+    "10B": "Lisa",
+    "13A": "Carla, Cosima",
+    "13B": "Theo"
+  },
+  "sections": [
+    {
+      "title": "Verbindungslehrer",
+      "text": "Wir haben uns über den aktuellen Stand der Suche nach einer Verbindungslehrkraft ausgetauscht. Neben Frau Löwe wäre Herr Langheim eine zusätzliche Option.\n\nFrau Löwe hat bereits zugesagt und kommt in die nächste SV-Stunde, um sich vorzustellen. Die weitere Absprache mit Herrn Langheim folgt.",
+      "votes": null
+    },
+    {
+      "title": "Schulplenum",
+      "text": "Für das neue Schulplenum haben wir unsere Vertretung festgelegt: Friederike und Fabiano nehmen als Delegierte der Schülervertretung an den Sitzungen teil.",
+      "votes": null
+    },
+    {
+      "title": "Podiumsdiskussion",
+      "text": "Wir haben den Organisationsstand der geplanten Podiumsdiskussion zur Kommunalwahl im März geprüft. Die meisten Einladungen wurden bereits per Mail versendet.\n\nDa die CDU derzeit im Urlaub ist und von der SPD noch keine Rückmeldung vorliegt, sind mit diesen und weiteren Parteien noch Absprachen nötig.",
+      "votes": null
+    },
+    {
+      "title": "Schulwebsite",
+      "text": "Der Status unserer Präsenz auf der Schulwebsite ist derzeit unklar, da Frau Valentin-Willeke in letzter Zeit schwer zu erreichen war.\n\nWir haben vereinbart, das Thema aktiv anzugehen, um unsere Seite zu erweitern und zu verbessern.",
+      "votes": null
+    },
+    {
+      "title": "SV-Aktion",
+      "text": "Die Planung unserer etwa halbjährlichen SV-Aktion hat begonnen. Diskutiert wurden ein Escape Room, Lasertag, eine Trampolinhalle und Bowling.\n\nDie Abstimmung über die Optionen folgt in einer der nächsten Sitzungen.",
+      "votes": null
+    }
+  ]
+}

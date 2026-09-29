@@ -968,8 +968,14 @@ function resetAll() {
 
 /* ── IMPORT / EXPORT ─────────────────────────────────────── */
 
+/* The exported file carries a format marker so tools (and Claude)
+   can recognise it; applyData() ignores unknown keys on import. */
+function exportData() {
+    return { format: 'sv-protokoll', version: 1, ...state };
+}
+
 function exportJSON() {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(exportData(), null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -980,20 +986,144 @@ function exportJSON() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function refreshAll() {
+    syncFieldInputs();
+    syncAttendanceInputs();
+    renderEditorSections();
+    updatePreview();
+}
+
 function importJSON(file) {
     const reader = new FileReader();
     reader.onload = () => {
         try {
             applyData(JSON.parse(String(reader.result)));
-            syncFieldInputs();
-            syncAttendanceInputs();
-            renderEditorSections();
-            updatePreview();
+            refreshAll();
         } catch (err) {
             alert('Die Datei konnte nicht gelesen werden – ist es ein Export dieses Generators?');
         }
     };
     reader.readAsText(file);
+}
+
+/* ── SHARE LINKS ─────────────────────────────────────────────
+   #import=<base64url(deflate-raw(JSON))>. The fragment never
+   leaves the browser, so a link carries a whole protocol without
+   any server. The Claude plugin (plugin/mcp) and the skill script
+   (shared/sv_protokoll.py) produce exactly the same encoding.
+   ─────────────────────────────────────────────────────────── */
+
+const LINK_PARAM = 'import';
+
+function bytesToBase64Url(bytes) {
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) {
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    }
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlToBytes(text) {
+    const b64 = text.replace(/-/g, '+').replace(/_/g, '/');
+    const bin = atob(b64 + '='.repeat((4 - b64.length % 4) % 4));
+    return Uint8Array.from(bin, c => c.charCodeAt(0));
+}
+
+async function pipeBytes(bytes, transform) {
+    const stream = new Blob([bytes]).stream().pipeThrough(transform);
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+async function encodeShare(data) {
+    const raw = new TextEncoder().encode(JSON.stringify(data));
+    return bytesToBase64Url(await pipeBytes(raw, new CompressionStream('deflate-raw')));
+}
+
+async function decodeShare(payload) {
+    const raw = await pipeBytes(base64UrlToBytes(payload), new DecompressionStream('deflate-raw'));
+    return JSON.parse(new TextDecoder().decode(raw));
+}
+
+function sharePayloadFromHash() {
+    const m = location.hash.match(new RegExp(`[#&]${LINK_PARAM}=([A-Za-z0-9_-]+)`));
+    return m ? m[1] : null;
+}
+
+async function shareLink() {
+    const base = location.href.replace(/#.*$/, '');
+    return `${base}#${LINK_PARAM}=${await encodeShare(exportData())}`;
+}
+
+/* Comparable form of a document – ignores ids and format markers. */
+function contentKey(data) {
+    const d = data || {};
+    const att = d.attendance || {};
+    return JSON.stringify([
+        d.meetingDate || '', d.printDate || '', d.author || '', d.location || '',
+        d.timeFrom || '', d.timeTo || '',
+        ALL_CLASSES.map(cls => String(att[cls] || '').trim()),
+        (d.sections || []).map(sec => normaliseSection(sec)).map(sec => [sec.title, sec.text, sec.votes])
+    ]);
+}
+
+function hasOwnContent() {
+    return state.sections.some(sectionHasContent) ||
+        ALL_CLASSES.some(cls => (state.attendance[cls] || '').trim());
+}
+
+/* Loads a protocol from the URL fragment. Returns true when the
+   state changed. An existing draft is only replaced after asking. */
+async function importFromHash({ askFirst }) {
+    const payload = sharePayloadFromHash();
+    if (!payload) return false;
+    history.replaceState(null, '', location.href.replace(/#.*$/, ''));
+
+    let data;
+    try {
+        data = await decodeShare(payload);
+        if (!data || typeof data !== 'object' || !Array.isArray(data.sections)) throw new Error('no protocol');
+    } catch (err) {
+        alert('Der Link ist beschädigt oder unvollständig – das Protokoll konnte nicht geladen werden.');
+        return false;
+    }
+
+    if (contentKey(data) === contentKey(state)) return false;
+    if (askFirst && hasOwnContent() &&
+        !confirm('Protokoll aus dem Link laden?\n\nDer aktuelle Entwurf wird dabei ersetzt. ' +
+            'Tipp: Vorher mit „Export (.json)“ sichern.')) {
+        return false;
+    }
+    applyData(data);
+    save();
+    showToast('Protokoll aus dem Link geladen');
+    return true;
+}
+
+async function copyText(text, button, doneLabel) {
+    try {
+        await navigator.clipboard.writeText(text);
+    } catch (err) {
+        /* No clipboard permission (e.g. file://) – let the user copy by hand. */
+        prompt('Zum Kopieren markieren und Strg+C drücken:', text);
+        return;
+    }
+    const label = button.textContent;
+    button.textContent = doneLabel;
+    button.disabled = true;
+    setTimeout(() => {
+        button.textContent = label;
+        button.disabled = false;
+    }, 1500);
+}
+
+let toastTimer = null;
+function showToast(message) {
+    const el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = message;
+    el.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.hidden = true; }, 3000);
 }
 
 /* ── PDF ─────────────────────────────────────────────────── */
@@ -1028,6 +1158,13 @@ function initFieldEvents() {
     document.getElementById('btn-pdf').addEventListener('click', generatePDF);
     document.getElementById('btn-reset-all').addEventListener('click', resetAll);
     document.getElementById('btn-export').addEventListener('click', exportJSON);
+    document.getElementById('btn-copy-link').addEventListener('click', async e => {
+        const btn = e.currentTarget;
+        copyText(await shareLink(), btn, 'Link kopiert ✓');
+    });
+    document.getElementById('btn-copy-json').addEventListener('click', e => {
+        copyText(JSON.stringify(exportData(), null, 2), e.currentTarget, 'JSON kopiert ✓');
+    });
 
     const fileInput = document.getElementById('import-file');
     document.getElementById('btn-import').addEventListener('click', () => fileInput.click());
@@ -1053,7 +1190,9 @@ window.addEventListener('load', async () => {
     initSectionEvents();
     initFieldEvents();
 
-    if (!loadSaved()) loadDefaults();
+    const hadSaved = loadSaved();
+    if (!hadSaved) loadDefaults();
+    await importFromHash({ askFirst: hadSaved });
 
     syncFieldInputs();
     syncAttendanceInputs();
@@ -1069,6 +1208,11 @@ window.addEventListener('load', async () => {
 
     const logo = document.querySelector('#pdf-preview-container .logo-img');
     if (logo && !logo.complete) logo.addEventListener('load', updatePreview, { once: true });
+});
+
+/* A link opened while the page is already open only changes the hash. */
+window.addEventListener('hashchange', async () => {
+    if (await importFromHash({ askFirst: true })) refreshAll();
 });
 
 /* Re-paginate when a late-arriving webfont changes the metrics. */
@@ -1087,6 +1231,10 @@ window.SV = {
     syncFieldInputs,
     syncAttendanceInputs,
     applyData,
+    exportData,
+    encodeShare,
+    decodeShare,
+    shareLink,
     normaliseSection,
     splitParagraph,
     voteResult,

@@ -24,11 +24,14 @@ Ein Werkzeug für die Schülervertretung der FWS Frankfurt: Sitzungsprotokolle s
 - 🕒 Optionale Angaben zu Ort und Uhrzeit der Sitzung
 - ↕️ Punkte per Klick sortieren, duplizieren-freies Löschen, Live-Vorschau
 - 💾 Automatisches Speichern im Browser, plus Export/Import als `.json`
+- 🔗 **Protokoll als Link** teilen („Link kopieren“): Die Daten stecken komprimiert im `#…` der URL und werden an keinen Server geschickt
+- 🤖 **Claude-Integration**: Skills + MCP-Server erstellen, korrigieren und überarbeiten Protokolle formgetreu, siehe [docs/claude.md](docs/claude.md)
 - 🖨️ PDF über den nativen Druckdialog – die Vorschau ist pixelgenau das Ergebnis
 
 ## 🛠️ Tech-Stack
 
 `HTML5` · `CSS3` · `JavaScript` – ohne Build-Schritt, ohne Abhängigkeiten zur Laufzeit.
+Der MCP-Server (`plugin/mcp`) braucht nur Node ≥ 22.
 
 ## 🚀 Lokal starten
 
@@ -42,7 +45,8 @@ npx http-server -p 8123 -s .
 ## 🧪 Tests
 
 Die Layout-Logik ist automatisiert abgesichert – Seitenfüllung, Umbrüche,
-Seitenzahlen, Tabellen, Persistenz und das Druck-Stylesheet:
+Seitenzahlen, Tabellen, Persistenz, Druck-Stylesheet, Import-Links und der
+Claude-MCP-Server samt PDF-Rendering:
 
 ```bash
 npm install      # einmalig, installiert Playwright

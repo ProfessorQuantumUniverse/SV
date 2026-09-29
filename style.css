@@ -296,6 +296,26 @@ body {
     flex-wrap: wrap;
 }
 
+.data-actions + .data-actions { margin-top: 8px; }
+.btn-ghost:disabled { opacity: 0.7; cursor: default; }
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    z-index: 100;
+    background: #111827;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.toast[hidden] { display: none; }
+
 .btn-pdf {
     width: 100%;
     background: var(--ink);
@@ -1046,6 +1066,7 @@ body {
 
     .editor-sidebar,
     .preview-toolbar,
+    .toast,
     #measure-host {
         display: none !important;
     }
