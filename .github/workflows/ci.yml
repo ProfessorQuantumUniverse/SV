@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build check & tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          # no package-lock.json is committed, so key the npm cache on package.json
+          cache-dependency-path: package.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Check plugin/ is in sync with shared/ and schema/
+        run: node scripts/build-plugin.mjs --check
+
+      - name: Build distributables (skill ZIPs, .mcpb)
+        run: node scripts/build-plugin.mjs --dist
+
+      - name: Run tests (layout + Claude tooling)
+        run: npm test
